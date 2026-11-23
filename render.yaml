@@ -1,14 +1,13 @@
 # Render Blueprint for Iron Oath.
 # Set the sync:false values in the Render dashboard before the first deploy.
-# The paid plan is required for preDeployCommand migrations on Render.
+# The Free plan does not support preDeployCommand, so migrations run in buildCommand.
 services:
   - type: web
     name: iron-oath
     runtime: python
     region: frankfurt
-    plan: 0.5c-512mb
-    buildCommand: pip install -r requirements.txt
-    preDeployCommand: flask db upgrade && flask seed-exercises
+    plan: free
+    buildCommand: pip install -r requirements.txt && FLASK_APP=wsgi.py flask db upgrade && FLASK_APP=wsgi.py flask seed-exercises
     startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile - --error-logfile -
     healthCheckPath: /api/health
     envVars:

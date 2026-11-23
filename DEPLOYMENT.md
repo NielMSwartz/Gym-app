@@ -47,7 +47,7 @@ If deploying through `render.yaml`, variables marked `sync: false` must be enter
 
 ### Free-plan note
 
-The Blueprint uses a paid `0.5c-512mb` plan because Render only enables `preDeployCommand` on paid plans. If you stay on the Free plan, move migrations into the build command instead:
+The Blueprint uses `plan: free`. Render's Free plan does not support `preDeployCommand`, so migrations and seeding run in the build command:
 
 ```yaml
 buildCommand: pip install -r requirements.txt && FLASK_APP=wsgi.py flask db upgrade && FLASK_APP=wsgi.py flask seed-exercises
@@ -55,12 +55,14 @@ buildCommand: pip install -r requirements.txt && FLASK_APP=wsgi.py flask db upgr
 
 Do **not** put migrations in the Gunicorn start command: every instance would run them, which can race.
 
+Free web services spin down after 15 minutes of inactivity and take about a minute to wake. That is fine for a personal logbook, but upgrade the compute plan if you need always-on availability. Data remains in Neon; only the local filesystem is ephemeral.
+
 ## 3. Build and start
 
 `render.yaml` uses:
 
-- Build: `pip install -r requirements.txt`
-- Pre-deploy: `flask db upgrade && flask seed-exercises`
+- Build: `pip install -r requirements.txt`, then `flask db upgrade` and `flask seed-exercises`
+- Pre-deploy: none (unsupported on the Free plan)
 - Start: `gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile - --error-logfile -`
 - Health check: `/api/health`
 
