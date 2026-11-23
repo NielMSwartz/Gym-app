@@ -79,7 +79,7 @@ def new_program():
         db.session.commit()
         set_setting(user.id, "active_program_id", str(program.id))
         db.session.commit()
-        flash(f"Program “{program.name}” has been forged.", "success")
+        flash(f"Program “{program.name}” has been saved.", "success")
         return redirect(url_for("programs.planner", program_id=program.id))
     names = {row["name"]: row["id"] for row in choices}
     payload = blank_program_payload(names, 8)

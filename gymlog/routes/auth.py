@@ -18,7 +18,7 @@ def login():
             target = request.form.get("next", "")
             if not target.startswith("/") or target.startswith("//"):
                 target = url_for("dashboard.index")
-            flash("Welcome back to the training hall.", "success")
+            flash("Signed in successfully.", "success")
             return redirect(target)
         flash("That password is not correct.", "error")
     next_url = request.args.get("next", "")
@@ -30,5 +30,5 @@ def login():
 @bp.route("/logout", methods=["POST"])
 def logout():
     session.clear()
-    flash("You have left the training hall.", "success")
+    flash("Signed out.", "success")
     return redirect(url_for("auth.login") if current_app.config.get("APP_PASSWORD") else url_for("dashboard.index"))

@@ -1,4 +1,4 @@
-"""End-to-end smoke and regression tests for the Iron Oath app."""
+"""End-to-end smoke and regression tests for the Gym Logbook app."""
 
 from __future__ import annotations
 
@@ -25,9 +25,30 @@ def _exercise_ids(app):
         return {row.name: row.id for row in Exercise.query.all()}
 
 
-def _create_program(client, app, name="Test Block"):
-    payload = blank_program_payload(_exercise_ids(app), 8)
+def _create_program(client, app, name="Test Block", with_day=False):
+    exercise_ids = _exercise_ids(app)
+    payload = blank_program_payload(exercise_ids, 8)
     payload["name"] = name
+    if with_day:
+        payload["weeks"][0]["days"] = [
+            {
+                "day_of_week": 0,
+                "label": "Push",
+                "is_rest": False,
+                "notes": "",
+                "exercises": [
+                    {
+                        "exercise_id": exercise_ids["Barbell Bench Press"],
+                        "notes": "",
+                        "progression_notes": "",
+                        "sets": [
+                            {"target_reps": 8, "target_weight_kg": None, "target_rpe": None, "rest_seconds": 90, "notes": ""}
+                            for _ in range(3)
+                        ],
+                    }
+                ],
+            }
+        ]
     response = client.post("/programs/new", data={"payload": json.dumps(payload)})
     assert response.status_code == 302
     with app.app_context():
@@ -60,6 +81,7 @@ def test_main_pages_render(client):
         "/exercises",
         "/workouts/active",
         "/logbook",
+        "/logbook/progress",
         "/statistics",
         "/records",
         "/settings",
@@ -68,6 +90,8 @@ def test_main_pages_render(client):
         "/offline",
     ]:
         assert client.get(path).status_code == 200, path
+    dashboard_html = client.get("/").get_data(as_text=True)
+    assert 'id="install-button"' not in dashboard_html
     assert client.get("/planner").status_code == 302
 
 
@@ -78,14 +102,14 @@ def test_program_builder_creates_eight_weeks(client, app):
         assert program.duration_weeks == 8
         assert len(program.weeks) == 8
         assert [week.week_number for week in program.weeks] == list(range(1, 9))
-        assert sum(1 for week in program.weeks for day in week.days if not day.is_rest) == 32
-        assert program.total_planned_sessions == 32
+        assert all(not week.days for week in program.weeks)
+        assert program.total_planned_sessions == 0
         assert get_setting(User.query.first().id, "active_program_id") == str(program_id)
     assert client.get(f"/planner/program/{program_id}").status_code == 200
 
 
 def test_program_and_exercise_edits_preserve_workout_history(client, app):
-    program_id = _create_program(client, app, "History Block")
+    program_id = _create_program(client, app, "History Block", with_day=True)
     day_id = _first_training_day(app, program_id)
     workout_id = _start_workout(client, day_id)
 
@@ -129,7 +153,7 @@ def test_program_and_exercise_edits_preserve_workout_history(client, app):
 
 
 def test_statistics_and_prs_use_completed_sets_only(client, app):
-    program_id = _create_program(client, app, "Stats Block")
+    program_id = _create_program(client, app, "Stats Block", with_day=True)
     workout_id = _start_workout(client, _first_training_day(app, program_id))
     with app.app_context():
         set_ids = [row.id for row in WorkoutSession.query.get(workout_id).exercises[0].sets][:2]
@@ -158,6 +182,26 @@ def test_statistics_and_prs_use_completed_sets_only(client, app):
     assert payload["summary"]["best_5rm"] == 100
     assert client.get("/statistics").status_code == 200
     assert client.get("/records").status_code == 200
+
+
+def test_progress_log_shows_completed_history(client, app):
+    program_id = _create_program(client, app, "Progress Block", with_day=True)
+    workout_id = _start_workout(client, _first_training_day(app, program_id))
+    with app.app_context():
+        set_id = WorkoutSession.query.get(workout_id).exercises[0].sets[0].id
+
+    assert client.post(
+        f"/workouts/{workout_id}/sets/{set_id}",
+        json={"actual_reps": 10, "actual_weight_kg": 60, "is_completed": True},
+    ).status_code == 200
+    assert client.post(f"/workouts/{workout_id}/complete", json={}).status_code == 200
+
+    response = client.get("/logbook/progress")
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Progress Log" in html
+    assert "Training journal" in html
+    assert "Barbell Bench Press" in html
 
 
 def test_offline_sync_is_idempotent_and_detects_conflicts(client, app):
@@ -236,7 +280,7 @@ def test_error_page_renders_without_a_bootstrapped_user(app):
         from flask import render_template
 
         html = render_template("errors/500.html", db_error=True)
-        assert "forge" in html.lower()
+        assert "database temporarily unavailable" in html.lower()
 
 
 def test_pwa_manifest_and_icons_are_served(client):

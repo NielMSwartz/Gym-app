@@ -1,4 +1,4 @@
-"""Relational models for the medieval gym logbook.
+"""Relational models for the gym logbook.
 
 Design rules:
 - Reusable exercise definitions are separate from planned assignments and
@@ -25,7 +25,7 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
-    display_name = db.Column(db.String(80), nullable=False, default="Warrior")
+    display_name = db.Column(db.String(80), nullable=False, default="Trainee")
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
     programs = db.relationship("Program", back_populates="user", cascade="all, delete-orphan")

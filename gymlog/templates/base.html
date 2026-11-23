@@ -3,23 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#7d1f2b">
-  <meta name="description" content="Iron Oath — a medieval strength-training logbook and progression tracker.">
+  <meta name="theme-color" content="#b42334">
+  <meta name="description" content="Gym Logbook — a clean strength-training logbook and progression tracker.">
   <link rel="manifest" href="{{ url_for('pwa.manifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icons/favicon-32.png') }}" sizes="32x32">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
-  <title>{% block title %}Iron Oath{% endblock %} · Gym Logbook</title>
+  <title>{% block title %}Gym Logbook{% endblock %} · Strength Tracker</title>
   {% block head %}{% endblock %}
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar" aria-label="Main navigation">
       <a class="brand" href="{{ url_for('dashboard.index') }}">
-        <span class="brand-mark" aria-hidden="true">⚔</span>
+        <span class="brand-mark" aria-hidden="true">GL</span>
         <span class="brand-text">
-          <strong>Iron Oath</strong>
-          <small>Training Hall</small>
+          <strong>Gym Logbook</strong>
+          <small>Strength Tracker</small>
         </span>
       </a>
 
@@ -28,15 +28,16 @@
           ('dashboard.index', '⌂', 'Dashboard'),
           ('programs.list_programs', '▤', 'My Programs'),
           ('programs.planner', '▦', 'Training Planner'),
-          ('exercises.library', '⚒', 'Exercise Library'),
-          ('workouts.active_workouts', '⚔', 'Active Workout'),
+          ('exercises.library', '◇', 'Exercise Library'),
+          ('workouts.active_workouts', '▶', 'Active Workout'),
           ('logbook.index', '▣', 'Workout Logbook'),
+          ('logbook.progress', '◷', 'Progress Log'),
           ('stats.index', '◈', 'Statistics'),
           ('records.index', '★', 'Personal Records'),
           ('settings.index', '⚙', 'Settings')
         ] %}
         {% for endpoint, icon, label in nav %}
-          <a href="{{ url_for(endpoint) }}" class="nav-link {% if request.endpoint and (request.endpoint == endpoint or request.endpoint.startswith(endpoint.split('.')[0] + '.')) %}active{% endif %}">
+          <a href="{{ url_for(endpoint) }}" class="nav-link {% if request.endpoint == endpoint %}active{% endif %}">
             <span class="nav-icon" aria-hidden="true">{{ icon }}</span>
             <span>{{ label }}</span>
           </a>
@@ -44,10 +45,10 @@
       </nav>
 
       <div class="sidebar-foot">
-        <div class="oath-line">“Stronger today than yesterday.”</div>
+        <div class="sidebar-note">Small steps. Logged consistently.</div>
         {% if password_enabled %}
         <form method="post" action="{{ url_for('auth.logout') }}">
-          <button class="text-button" type="submit">Leave training hall</button>
+          <button class="text-button" type="submit">Sign out</button>
         </form>
         {% endif %}
       </div>
@@ -57,13 +58,12 @@
       <header class="topbar">
         <div class="topbar-left">
           <a class="mobile-brand" href="{{ url_for('dashboard.index') }}">
-            <span aria-hidden="true">⚔</span> Iron Oath
+            <span aria-hidden="true">GL</span> Gym Logbook
           </a>
-          <div class="page-kicker">{% block kicker %}Training Headquarters{% endblock %}</div>
+          <div class="page-kicker">{% block kicker %}Strength Tracker{% endblock %}</div>
         </div>
         <div class="topbar-actions">
           <span id="sync-indicator" class="sync-pill" hidden></span>
-          <button id="install-button" class="button button-ghost button-small" type="button" hidden>Install app</button>
           <a class="avatar" href="{{ url_for('settings.index') }}" aria-label="Settings for {{ app_user.display_name }}">
             {{ (app_user.display_name or 'W')[:1]|upper if app_user else '?' }}
           </a>
@@ -96,7 +96,7 @@
   <nav class="bottom-nav" aria-label="Quick navigation">
     <a href="{{ url_for('dashboard.index') }}" class="{% if request.endpoint == 'dashboard.index' %}active{% endif %}"><span>⌂</span><small>Home</small></a>
     <a href="{{ url_for('programs.planner') }}" class="{% if request.endpoint and request.endpoint.startswith('programs') %}active{% endif %}"><span>▦</span><small>Plan</small></a>
-    <a href="{{ url_for('workouts.active_workouts') }}" class="workout-fab" aria-label="Active workout"><span>⚔</span></a>
+    <a href="{{ url_for('workouts.active_workouts') }}" class="workout-fab" aria-label="Active workout"><span>▶</span></a>
     <a href="{{ url_for('logbook.index') }}" class="{% if request.endpoint and request.endpoint.startswith('logbook') %}active{% endif %}"><span>▣</span><small>Log</small></a>
     <a href="{{ url_for('stats.index') }}" class="{% if request.endpoint == 'stats.index' %}active{% endif %}"><span>◈</span><small>Stats</small></a>
   </nav>

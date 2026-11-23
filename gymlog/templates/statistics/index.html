@@ -78,7 +78,7 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
 <script>
-  window.IRON_OATH_STATS = {{ payload|tojson }};
+  window.GYM_LOGBOOK_STATS = {{ payload|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 {% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Progress Log{% endblock %}
+{% block kicker %}Training Journal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Progress Log</h1>
+    <p>A chronological record of completed training, with the numbers that changed along the way.</p>
+  </div>
+  <div class="header-actions">
+    <a href="{{ url_for('logbook.index') }}" class="button button-ghost">Workout logbook</a>
+    <a href="{{ url_for('stats.index') }}" class="button button-primary">Statistics</a>
+  </div>
+</div>
+
+<div class="summary-strip">
+  <div class="card stat-card"><div class="stat-label">Sessions logged</div><div class="stat-value">{{ summary.sessions }}</div></div>
+  <div class="card stat-card"><div class="stat-label">Completed sets</div><div class="stat-value">{{ summary.sets }}</div></div>
+  <div class="card stat-card"><div class="stat-label">Total volume</div><div class="stat-value">{{ summary.volume|round(1) }}</div><div class="stat-note">kg · sets × reps × load</div></div>
+  <div class="card stat-card"><div class="stat-label">Current streak</div><div class="stat-value">{{ summary.streak }} wk</div><div class="stat-note">consecutive training weeks</div></div>
+  <div class="card stat-card"><div class="stat-label">Exercises tracked</div><div class="stat-value">{{ summary.exercises }}</div></div>
+</div>
+
+{% if not journal %}
+  <div class="empty-state">
+    <div class="empty-icon">◷</div>
+    <h3>Nothing logged yet</h3>
+    <p>Complete a workout with actual reps and weights. This page will turn those entries into a progress journal.</p>
+    <a href="{{ url_for('workouts.active_workouts') }}" class="button button-primary">Start a workout</a>
+  </div>
+{% else %}
+  <section class="card" style="margin-bottom:18px">
+    <div class="card-header"><h3>Exercise progress</h3><span class="badge">estimated 1RM</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Exercise</th><th class="number">Sessions</th><th class="number">First wk</th>
+            <th class="number">First est. 1RM</th><th class="number">Latest est. 1RM</th>
+            <th class="number">Change</th><th class="number">Best load</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in exercise_progress %}
+            <tr>
+              <td><strong>{{ item.name }}</strong></td>
+              <td class="number">{{ item.sessions }}</td>
+              <td class="number">{{ item.first_load|round(1) }} kg</td>
+              <td class="number">{{ item.first_e1rm|round(1) }} kg</td>
+              <td class="number">{{ item.last_e1rm|round(1) }} kg</td>
+              <td class="number"><span class="trend-{{ item.trend }}">{{ '↑' if item.trend == 'up' else '↓' if item.trend == 'down' else '→' }} {{ item.delta|round(1) }} kg</span></td>
+              <td class="number">{{ item.best_load|round(1) }} kg</td>
+              <td><a class="button button-ghost button-small" href="{{ url_for('logbook.exercise_history', exercise_key=item.key) }}">History</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="margin:12px 0 0;font-size:0.78rem">Estimated 1RM uses the Epley formula. It is a trend indicator, not a tested maximum.</p>
+  </section>
+
+  <h2>Training journal</h2>
+  {% set month = namespace(value='') %}
+  {% for entry in journal %}
+    {% if entry.month != month.value %}
+      {% set month.value = entry.month %}
+      <div class="log-month">{{ entry.month }}</div>
+    {% endif %}
+    <section class="card log-entry" style="margin-bottom:14px">
+      <div class="log-entry-header">
+        <div>
+          <div class="log-entry-date">{{ entry.date.strftime('%a %d %b %Y') }}</div>
+          <h3 style="margin:4px 0">{{ entry.session.title }}</h3>
+          <div class="muted">{{ entry.session.program_name_snapshot or 'Freestyle session' }}{% if entry.session.week_number %} · Week {{ entry.session.week_number }}{% endif %}</div>
+        </div>
+        <div class="button-row">
+          <span class="badge">{{ entry.sets }} sets</span>
+          <span class="badge">{{ entry.volume|round(1) }} kg</span>
+          <a href="{{ url_for('logbook.detail', workout_id=entry.session.id) }}" class="button button-ghost button-small">Open entry</a>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        {% for exercise in entry.exercises %}
+          <div class="log-exercise">
+            <strong>{{ exercise.name }}</strong>
+            <span>Best set: {{ exercise.best_reps }} × {{ exercise.best_load|round(1) }} kg</span>
+            <span>{{ exercise.sets }} completed sets</span>
+            <span>Est. 1RM {{ exercise.best_e1rm|round(1) }} kg</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if entry.notes %}<p class="muted" style="margin:12px 0 0">{{ entry.notes }}</p>{% endif %}
+    </section>
+  {% endfor %}
+{% endif %}
+{% endblock %}

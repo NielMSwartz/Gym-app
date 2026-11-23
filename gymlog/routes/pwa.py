@@ -14,17 +14,17 @@ bp = Blueprint("pwa", __name__)
 def manifest():
     base_url = current_app.config["PUBLIC_BASE_URL"]
     data = {
-        "name": "Iron Oath — Gym Logbook",
-        "short_name": "Iron Oath",
-        "description": "A medieval strength-training logbook and progression tracker.",
+        "name": "Gym Logbook — Strength Tracker",
+        "short_name": "GymLog",
+        "description": "A clean strength-training logbook and progression tracker.",
         "id": "/",
         "start_url": "/",
         "scope": "/",
         "display": "standalone",
         "display_override": ["standalone", "minimal-ui"],
         "orientation": "portrait-primary",
-        "background_color": "#0d0c0b",
-        "theme_color": "#7d1f2b",
+        "background_color": "#0f1115",
+        "theme_color": "#b42334",
         "categories": ["health", "fitness", "lifestyle"],
         "icons": [
             {"src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},

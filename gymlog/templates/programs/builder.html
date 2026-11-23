@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>{% if editing_week %}Customise Week {{ week_number }}{% elif program %}Edit {{ program.name }}{% else %}Forge a New Program{% endif %}</h1>
+    <h1>{% if editing_week %}Customise Week {{ week_number }}{% elif program %}Edit {{ program.name }}{% else %}Create a New Program{% endif %}</h1>
     <p>{% if editing_week %}Adjust this single week. Other weeks stay as they are.{% else %}Build your training block week by week. Completed workout history is never rewritten.{% endif %}</p>
   </div>
   <div class="header-actions"><a href="{{ url_for('programs.list_programs') }}" class="button button-ghost">Back to programs</a></div>
@@ -19,7 +19,7 @@
       <div class="form-row">
         <div class="field">
           <label for="name">Program name <span class="required">*</span></label>
-          <input id="name" name="display_name" value="{{ payload_obj.name or '' }}" required placeholder="e.g. Eight Week Iron Oath">
+          <input id="name" name="display_name" value="{{ payload_obj.name or '' }}" required placeholder="e.g. Eight Week Strength Block">
         </div>
         <div class="field">
           <label for="start_date">Start date <span class="required">*</span></label>

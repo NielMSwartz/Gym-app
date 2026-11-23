@@ -1,4 +1,4 @@
-# Deployment Guide — Iron Oath on Neon + Render
+# Deployment Guide — Gym Logbook on Neon + Render
 
 This guide covers the intended production path: Neon Lakebase PostgreSQL for data, Render for the Flask/Gunicorn web service, HTTPS, migrations and PWA verification.
 

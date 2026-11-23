@@ -5,7 +5,7 @@
 <div class="page-header">
   <div>
     <h1>My Programs</h1>
-    <p>Forge, duplicate and archive training blocks. Editing a program never rewrites logged workouts.</p>
+    <p>Create, duplicate and archive training blocks. Editing a program never rewrites logged workouts.</p>
   </div>
   <div class="header-actions"><a href="{{ url_for('programs.new_program') }}" class="button button-primary">＋ New program</a></div>
 </div>
@@ -44,7 +44,7 @@
 {% else %}
   <div class="empty-state">
     <div class="empty-icon">▤</div>
-    <h3>No programs forged yet</h3>
+    <h3>No programs yet</h3>
     <p>Create an eight-week block with your own days, exercises, sets and targets.</p>
     <a href="{{ url_for('programs.new_program') }}" class="button button-primary">Create program</a>
   </div>

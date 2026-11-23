@@ -137,7 +137,7 @@ def _ensure_bootstrap() -> None:
         return
     user = User.query.order_by(User.id.asc()).first()
     if not user:
-        user = User(display_name="Warrior", created_at=utcnow())
+        user = User(display_name="Trainee", created_at=utcnow())
         db.session.add(user)
         db.session.flush()
         defaults = {

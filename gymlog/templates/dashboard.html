@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
-{% block kicker %}Training Headquarters{% endblock %}
+{% block kicker %}Overview{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Stand ready, {{ app_user.display_name }}.</h1>
-    <p>Your training block, today's session and the numbers that matter — nothing more.</p>
+    <h1>Welcome back, {{ app_user.display_name }}.</h1>
+    <p>Your current plan, today's session and the numbers that matter — nothing more.</p>
   </div>
   <div class="header-actions">
-    <a href="{{ url_for('workouts.active_workouts') }}" class="button button-primary">⚔ Start / continue workout</a>
+    <a href="{{ url_for('workouts.active_workouts') }}" class="button button-primary">▶ Start / continue workout</a>
     <a href="{{ url_for('programs.new_program') }}" class="button button-ghost">New program</a>
   </div>
 </div>
@@ -18,13 +18,13 @@
   <div class="empty-state">
     <div class="empty-icon">▤</div>
     <h3>No active training program</h3>
-    <p>Forge an eight-week block, assign your exercises, then return here to see today's quest.</p>
+    <p>Create an eight-week block, add your own days and exercises, then return here to see today's session.</p>
     <a href="{{ url_for('programs.new_program') }}" class="button button-primary">Create your first program</a>
   </div>
 {% else %}
   <div class="grid grid-4" style="margin-bottom:18px">
     <div class="card stat-card">
-      <div class="stat-label">Active block</div>
+      <div class="stat-label">Active plan</div>
       <div class="stat-value">{{ program.name[:18] }}</div>
       <div class="stat-note">{{ program.duration_weeks }} weeks · {{ program.total_planned_sessions }} sessions</div>
     </div>
@@ -34,7 +34,7 @@
       <div class="stat-note">of {{ program.duration_weeks }}</div>
     </div>
     <div class="card stat-card">
-      <div class="stat-label">Block progress</div>
+      <div class="stat-label">Plan progress</div>
       <div class="stat-value">{{ progress }}%</div>
       <div class="progress-track" style="margin-top:8px"><div class="progress-fill" style="width:{{ progress }}%"></div></div>
     </div>
@@ -49,14 +49,14 @@
     <section class="card hero-card span-2">
       <div class="card-header">
         <div>
-          <h2>Today's muster</h2>
+          <h2>Today's session</h2>
           <div class="hero-meta">
             <span><strong>{{ today.strftime('%A %d %B') }}</strong></span>
             {% if todays_day %}<span>Training day: <strong>{{ todays_day.display_label }}</strong></span>{% else %}<span>Rest day</span>{% endif %}
           </div>
         </div>
         {% if in_progress %}
-          <a href="{{ url_for('workouts.workout_detail', workout_id=in_progress.id) }}" class="button button-gold">Resume session</a>
+          <a href="{{ url_for('workouts.workout_detail', workout_id=in_progress.id) }}" class="button button-primary">Resume session</a>
         {% elif todays_day %}
           <form method="post" action="{{ url_for('workouts.start_workout') }}">
             <input type="hidden" name="day_id" value="{{ todays_day.id }}">
@@ -88,14 +88,14 @@
       {% else %}
         <div class="empty-state" style="padding:22px">
           <h3>No exercises assigned</h3>
-          <p>Open the planner to configure this training day.</p>
+          <p>Open the planner to add days and exercises to this training day.</p>
           <a href="{{ url_for('programs.planner', program_id=program.id) }}" class="button button-ghost">Open planner</a>
         </div>
       {% endif %}
     </section>
 
     <section class="card">
-      <div class="card-header"><h3>Recent workouts</h3><a href="{{ url_for('logbook.index') }}">View logbook →</a></div>
+      <div class="card-header"><h3>Recent workouts</h3><a href="{{ url_for('logbook.progress') }}">Progress log →</a></div>
       {% if recent_workouts %}
         <div class="session-list">
           {% for workout in recent_workouts %}
@@ -104,7 +104,7 @@
                 <strong>{{ workout.title }}</strong>
                 <div class="muted">{{ workout.started_at.strftime('%d %b %Y') }} · {{ workout.exercises|length }} exercises</div>
               </div>
-              <span class="badge {{ 'success' if workout.is_complete else 'warning' }}">{{ 'Complete' if workout.is_complete else 'In progress' }}</span>
+              <span class="badge {{ 'success' if workout.is_complete else 'warning' }}">{{ 'Complete' if workout.is_complete else 'Draft' }}</span>
             </a>
           {% endfor %}
         </div>
@@ -123,12 +123,12 @@
                 <strong>{{ record.exercise_name_snapshot }}</strong>
                 <div class="muted">{{ record.record_type.replace('_', ' ') }} · {{ record.achieved_at.strftime('%d %b %Y') }}</div>
               </div>
-              <span class="badge warning">{{ record.value|round(1) }}</span>
+              <span class="badge">{{ record.value|round(1) }}</span>
             </div>
           {% endfor %}
         </div>
       {% else %}
-        <div class="empty-state"><h3>No records yet</h3><p>Complete a workout to start claiming honours.</p></div>
+        <div class="empty-state"><h3>No records yet</h3><p>Complete a workout to start setting records.</p></div>
       {% endif %}
     </section>
 
@@ -147,7 +147,7 @@
       <div class="card-header"><h3>Consistency</h3></div>
       <p>Completed <strong>{{ consistency.completed|sum }}</strong> sessions across the last 8 weeks.</p>
       <div class="progress-track"><div class="progress-fill" style="width:{{ consistency.program_completion }}%"></div></div>
-      <p class="muted" style="margin-top:8px">{{ consistency.program_completion }}% of this program's planned sessions complete.</p>
+      <p class="muted" style="margin-top:8px">{{ consistency.program_completion }}% of this plan's sessions complete.</p>
     </section>
   </div>
 {% endif %}
@@ -164,13 +164,13 @@
       datasets: [{
         label: 'Weekly volume (kg)',
         data: {{ weekly_volume|map(attribute='volume')|list|tojson }},
-        borderColor: '#c9a24d',
-        backgroundColor: 'rgba(125,31,43,0.35)',
+        borderColor: '#d53246',
+        backgroundColor: 'rgba(180,35,52,0.28)',
         fill: true,
         tension: 0.3
       }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#e8dfcd' } } }, scales: { x: { ticks: { color: '#a89e8c' } }, y: { ticks: { color: '#a89e8c' }, beginAtZero: true } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#eef1f5' } } }, scales: { x: { ticks: { color: '#a2aab8' } }, y: { ticks: { color: '#a2aab8' }, beginAtZero: true } } }
   });
 </script>
 {% endif %}

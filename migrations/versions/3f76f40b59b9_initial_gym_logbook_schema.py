@@ -225,7 +225,7 @@ def upgrade():
         batch_op.create_index('ix_records_user_type', ['user_id', 'record_type'], unique=False)
 
     # Existing legacy tables from an earlier schema are intentionally left
-    # untouched: this migration only adds the new Iron Oath schema.
+    # untouched: this migration only adds the new gym logbook schema.
     # ### end Alembic commands ###
 
 

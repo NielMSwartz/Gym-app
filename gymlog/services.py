@@ -42,49 +42,14 @@ from .utils import (
 
 
 def blank_program_payload(exercise_ids: dict[str, int] | None = None, duration: int = 8) -> dict[str, Any]:
-    """Return a sensible eight-week starting template for the builder."""
-    exercise_ids = exercise_ids or {}
-    example_days = [
-        (0, "Chest", False, ["Barbell Bench Press", "Incline Dumbbell Press", "Chest Dips"]),
-        (1, "Legs", False, ["Back Squat", "Romanian Deadlift", "Leg Curl"]),
-        (2, "Rest Day", True, []),
-        (3, "Upper Body", False, ["Incline Bench Press", "Overhead Press", "Pull-Ups"]),
-        (4, "Back", False, ["Barbell Rows", "Dumbbell Rows", "Lat Pulldowns"]),
-        (5, "Optional Rest", True, []),
-        (6, "Optional Rest", True, []),
-    ]
+    """Return an empty week structure the user fills in themselves.
+
+    No days, exercises or targets are pre-filled. The builder still receives
+    every week so the plan can be saved as-is and edited later.
+    """
     weeks = []
     for week_number in range(1, duration + 1):
-        days = []
-        for day_of_week, label, is_rest, exercise_names in example_days:
-            exercises = []
-            if not is_rest:
-                for name in exercise_names:
-                    exercise_id = exercise_ids.get(name)
-                    if not exercise_id:
-                        continue
-                    exercises.append(
-                        {
-                            "exercise_id": exercise_id,
-                            "exercise_name": name,
-                            "notes": "",
-                            "progression_notes": "",
-                            "sets": [
-                                {"target_reps": 8, "target_weight_kg": None, "target_rpe": None, "rest_seconds": 90, "notes": ""}
-                                for _ in range(3)
-                            ],
-                        }
-                    )
-            days.append(
-                {
-                    "day_of_week": day_of_week,
-                    "label": label,
-                    "is_rest": is_rest,
-                    "notes": "",
-                    "exercises": exercises,
-                }
-            )
-        weeks.append({"week_number": week_number, "title": f"Week {week_number}", "notes": "", "days": days})
+        weeks.append({"week_number": week_number, "title": f"Week {week_number}", "notes": "", "days": []})
     return {
         "name": "",
         "description": "",

@@ -1,6 +1,6 @@
-# Iron Oath — Medieval Gym Logbook & Strength Tracker
+# Gym Logbook — Strength Tracker
 
-Iron Oath is a single-user, installable strength-training logbook built with Flask, SQLAlchemy, Neon PostgreSQL, Chart.js and a dark medieval UI.
+Gym Logbook is a single-user, installable strength-training logbook built with Flask, SQLAlchemy, Neon PostgreSQL, Chart.js and a clean grey/red UI.
 
 It keeps **plans** separate from **permanent workout history**: editing a program, renaming an exercise or deleting a library movement never rewrites completed sessions.
 
@@ -8,13 +8,14 @@ It keeps **plans** separate from **permanent workout history**: editing a progra
 
 - **Dashboard** — current program week, today's planned session, recent workouts, records and volume trend.
 - **Eight-week planner** — labelled week columns, per-day sessions, reusable templates, custom single-week editing, week-to-week copying, and a stacked mobile week selector.
-- **Program builder** — add/edit/duplicate/archive programs and configure exercises, planned sets, reps, load, RPE and notes.
+- **Program builder** — starts completely empty; add/edit/duplicate/archive programs and configure exercises, planned sets, reps, load, RPE and notes yourself.
 - **Exercise library** — seeded compound/isolation movements plus custom exercises, search, filtering, archive and safe delete.
 - **Workout logging** — start programmed or freestyle sessions, resume drafts, copy previous values, record actual reps/load/RPE/RIR/completion/notes, add sets/exercises, rest timer.
 - **Permanent logbook** — date/program filters, partial-session option, workout details and per-exercise history.
+- **Progress Log** — a journal-style chronological view with session entries, volume, streaks and first/latest/estimated-1RM changes per exercise.
 - **Statistics** — completed-set-only volume by week, muscle and exercise; strength progression; consistency; session volume; estimated 1RM clearly labelled as an **Epley estimate**, not a tested max.
 - **Personal records** — automatic heaviest load, most reps at a weight, estimated 1RM, session volume and weekly volume, rebuilt from completed workouts.
-- **PWA** — manifest, install prompt only when supported, service worker app-shell cache, offline page, generated icons, and an IndexedDB workout queue.
+- **PWA** — manifest, install button in Settings only when supported, service worker app-shell cache, offline page, generated icons, and an IndexedDB workout queue.
 - **Offline sync** — idempotent `client_uuid` upserts, `base_updated_at` conflict detection, pending/conflict indicators, and no silent overwrites or duplicates.
 - **Deployment** — Gunicorn, Render Blueprint, Neon pooled/direct connection split, health check, error handlers and structured logging.
 
@@ -101,6 +102,7 @@ python -c "from wsgi import app; print(len(list(app.url_map.iter_rules())))"
 | `/workouts/active` | Start/resume workouts |
 | `/workouts/<id>` | Active workout logger |
 | `/logbook` | Workout history |
+| `/logbook/progress` | Progress journal and per-exercise changes |
 | `/statistics` | Charts and analytics |
 | `/records` | Personal records |
 | `/settings` | Preferences and PWA info |

@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Workout Logbook{% endblock %}
-{% block kicker %}Permanent Record{% endblock %}
+{% block kicker %}Session History{% endblock %}
 {% block content %}
 <div class="page-header">
   <div><h1>Workout Logbook</h1><p>Every completed session, preserved even if programs or exercises change.</p></div>
+  <div class="header-actions"><a href="{{ url_for('logbook.progress') }}" class="button button-primary">View progress log</a></div>
 </div>
 
 <section class="card" style="margin-bottom:16px">

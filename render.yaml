@@ -1,4 +1,4 @@
-# Render Blueprint for Iron Oath.
+# Render Blueprint for Gym Logbook.
 # Set the sync:false values in the Render dashboard before the first deploy.
 # The Free plan does not support preDeployCommand, so migrations run in buildCommand.
 services:

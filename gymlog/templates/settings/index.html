@@ -24,12 +24,7 @@
       <li>Sync uses a unique workout ID so retries never create duplicate sessions.</li>
       <li>If the server copy changed after your offline copy was saved, a <strong>conflict</strong> is shown instead of overwriting newer data.</li>
     </ul>
-    <button class="button button-ghost" type="button" id="install-settings">Install app</button>
-    <script>
-      document.getElementById('install-settings').addEventListener('click', function () {
-        document.getElementById('install-button').click();
-      });
-    </script>
+    <button class="button button-ghost" type="button" id="install-button" hidden>Install app</button>
   </section>
 </div>
 {% endblock %}

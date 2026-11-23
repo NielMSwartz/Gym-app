@@ -25,14 +25,7 @@
   }
 
   function defaultWeek(number) {
-    return {
-      week_number: number,
-      title: 'Week ' + number,
-      notes: '',
-      days: DAY_NAMES.map(function (name, index) {
-        return { day_of_week: index, label: name, is_rest: index >= 5, notes: '', exercises: [] };
-      })
-    };
+    return { week_number: number, title: 'Week ' + number, notes: '', days: [] };
   }
 
   function clone(value) { return JSON.parse(JSON.stringify(value)); }

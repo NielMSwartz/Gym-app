@@ -6,8 +6,9 @@ from datetime import datetime, time, timedelta
 
 from flask import Blueprint, abort, render_template, request
 
+from ..analytics import filtered_sessions, progress_logbook_data
 from ..models import WorkoutExercise, WorkoutSession
-from ..utils import get_bool_setting, parse_date
+from ..utils import get_bool_setting, get_float_setting, parse_date
 from .helpers import current_user, owned
 
 bp = Blueprint("logbook", __name__)
@@ -43,6 +44,21 @@ def index():
         program_id=program_id,
         date_from=request.args.get("from", ""),
         date_to=request.args.get("to", ""),
+    )
+
+
+@bp.route("/logbook/progress")
+def progress():
+    """A journal-style view of completed training with per-exercise progress."""
+    user = current_user()
+    bodyweight = get_float_setting(user.id, "bodyweight_kg", 75.0)
+    sessions = filtered_sessions(user.id, include_partial=False)
+    summary, journal, exercise_progress = progress_logbook_data(sessions, bodyweight)
+    return render_template(
+        "logbook/progress.html",
+        summary=summary,
+        journal=journal,
+        exercise_progress=exercise_progress,
     )
 
 

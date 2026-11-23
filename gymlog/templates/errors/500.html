@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#7d1f2b">
+  <meta name="theme-color" content="#b42334">
   <link rel="icon" href="{{ url_for('static', filename='icons/favicon-32.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
-  <title>{% if db_error %}Database unavailable{% else %}Error{% endif %} · Iron Oath</title>
+  <title>{% if db_error %}Database unavailable{% else %}Error{% endif %} · Gym Logbook</title>
 </head>
 <body>
   <div class="offline-page">
     <div class="card">
-      <div class="empty-icon">⚒</div>
-      <h1>{% if db_error %}The forge is temporarily cold{% else %}The forge has faltered{% endif %}</h1>
+      <div class="empty-icon">!</div>
+      <h1>{% if db_error %}Database temporarily unavailable{% else %}Something went wrong{% endif %}</h1>
       <p class="muted">
         {% if db_error %}
           The database is temporarily unavailable. Your last save was not lost if it had already succeeded.

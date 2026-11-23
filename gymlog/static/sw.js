@@ -1,5 +1,5 @@
-/* Iron Oath service worker: app shell cache + network-first navigation. */
-const CACHE_VERSION = 'iron-oath-v1';
+/* Gym Logbook service worker: app shell cache + network-first navigation. */
+const CACHE_VERSION = 'gym-logbook-v2';
 const APP_SHELL = [
   '/',
   '/offline',

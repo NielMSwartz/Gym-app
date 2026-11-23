@@ -179,3 +179,124 @@ def latest_personal_records(user_id: int, limit: int = 5) -> list[PersonalRecord
         .limit(limit)
         .all()
     )
+
+
+def _week_start(day: date) -> date:
+    return day - timedelta(days=day.weekday())
+
+
+def current_streak_weeks(sessions: Iterable[WorkoutSession]) -> int:
+    """Count consecutive weeks with at least one completed session."""
+    active_weeks = {
+        _week_start((session.completed_at or session.started_at).date())
+        for session in sessions
+    }
+    if not active_weeks:
+        return 0
+
+    cursor = _week_start(date.today())
+    # A streak from last week is still valid until this week is over.
+    if cursor not in active_weeks:
+        cursor -= timedelta(weeks=1)
+
+    streak = 0
+    while cursor in active_weeks:
+        streak += 1
+        cursor -= timedelta(weeks=1)
+    return streak
+
+
+def progress_logbook_data(
+    sessions: Iterable[WorkoutSession], bodyweight_kg: float
+) -> tuple[dict, list[dict], list[dict]]:
+    """Build a chronological training journal and per-exercise progress table."""
+    sessions = list(sessions)
+    rows = completed_set_rows(sessions, bodyweight_kg)
+    rows_by_session: dict[int, list[dict]] = defaultdict(list)
+    rows_by_exercise: dict[str, list[dict]] = defaultdict(list)
+
+    for row in rows:
+        rows_by_session[row["session"].id].append(row)
+        rows_by_exercise[row["exercise"].exercise_key].append(row)
+
+    journal: list[dict] = []
+    for session in sorted(sessions, key=lambda s: s.started_at, reverse=True):
+        session_rows = rows_by_session.get(session.id, [])
+        if not session_rows:
+            continue
+
+        by_exercise: dict[str, list[dict]] = defaultdict(list)
+        for row in session_rows:
+            by_exercise[row["exercise"].exercise_key].append(row)
+
+        exercises = []
+        for key, ex_rows in by_exercise.items():
+            best = max(
+                ex_rows,
+                key=lambda r: (r["e1rm"] or 0, r["load"], r["set"].actual_reps or 0),
+            )
+            exercises.append(
+                {
+                    "key": key,
+                    "name": ex_rows[0]["exercise"].exercise_name_snapshot,
+                    "sets": len(ex_rows),
+                    "best_load": round(max(r["load"] for r in ex_rows), 1),
+                    "best_reps": max(r["set"].actual_reps or 0 for r in ex_rows),
+                    "best_e1rm": round(best["e1rm"] or 0, 1),
+                }
+            )
+        exercises.sort(key=lambda item: item["best_e1rm"], reverse=True)
+
+        entry_date = (session.completed_at or session.started_at).date()
+        journal.append(
+            {
+                "session": session,
+                "date": entry_date,
+                "month": entry_date.strftime("%B %Y"),
+                "volume": round(sum(r["volume"] for r in session_rows), 1),
+                "sets": len(session_rows),
+                "exercises": exercises,
+                "notes": session.notes or "",
+            }
+        )
+
+    exercise_progress: list[dict] = []
+    for key, ex_rows in rows_by_exercise.items():
+        ex_rows.sort(key=lambda r: r["date"])
+        first, last = ex_rows[0], ex_rows[-1]
+        best = max(
+            ex_rows,
+            key=lambda r: (r["e1rm"] or 0, r["load"], r["set"].actual_reps or 0),
+        )
+        first_e1rm = round(first["e1rm"] or 0, 1)
+        last_e1rm = round(last["e1rm"] or 0, 1)
+        delta = round(last_e1rm - first_e1rm, 1)
+        trend = "up" if delta > 0.05 else "down" if delta < -0.05 else "flat"
+
+        exercise_progress.append(
+            {
+                "key": key,
+                "name": first["exercise"].exercise_name_snapshot,
+                "sessions": len({r["session"].id for r in ex_rows}),
+                "sets": len(ex_rows),
+                "first_date": first["date"],
+                "last_date": last["date"],
+                "first_load": round(first["load"], 1),
+                "last_load": round(last["load"], 1),
+                "best_load": round(max(r["load"] for r in ex_rows), 1),
+                "first_e1rm": first_e1rm,
+                "last_e1rm": last_e1rm,
+                "delta": delta,
+                "trend": trend,
+            }
+        )
+    exercise_progress.sort(key=lambda item: (item["last_date"], item["sessions"]), reverse=True)
+
+    summary = {
+        "sessions": len(journal),
+        "sets": len(rows),
+        "volume": round(sum(r["volume"] for r in rows), 1),
+        "streak": current_streak_weeks(sessions),
+        "exercises": len(exercise_progress),
+    }
+    return summary, journal, exercise_progress

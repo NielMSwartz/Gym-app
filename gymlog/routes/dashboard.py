@@ -1,4 +1,4 @@
-"""Training headquarters dashboard."""
+"""Dashboard overview."""
 
 from __future__ import annotations
 
