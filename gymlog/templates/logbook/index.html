@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Workout Logbook{% endblock %}
+{% block kicker %}Permanent Record{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Workout Logbook</h1><p>Every completed session, preserved even if programs or exercises change.</p></div>
+</div>
+
+<section class="card" style="margin-bottom:16px">
+  <form class="form-row-3" method="get">
+    <div class="field"><label for="from">From</label><input id="from" type="date" name="from" value="{{ date_from }}"></div>
+    <div class="field"><label for="to">To</label><input id="to" type="date" name="to" value="{{ date_to }}"></div>
+    <div class="field"><label for="program_id">Program</label><select id="program_id" name="program_id"><option value="">All programs</option>{% for program in app_user.programs %}<option value="{{ program.id }}" {% if program_id == program.id %}selected{% endif %}>{{ program.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label class="checkbox-field"><input type="checkbox" name="include_partial" value="1" {% if include_partial %}checked{% endif %}> Include partial sessions</label></div>
+    <div class="field" style="justify-content:end"><button class="button button-ghost" type="submit">Filter log</button></div>
+  </form>
+</section>
+
+{% if workouts %}
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Session</th><th>Program</th><th>Exercises</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for workout in workouts %}
+          <tr>
+            <td>{{ workout.started_at.strftime('%d %b %Y %H:%M') }}</td>
+            <td><strong>{{ workout.title }}</strong></td>
+            <td>{{ workout.program_name_snapshot }}{% if workout.week_number %} · W{{ workout.week_number }}{% endif %}</td>
+            <td>{{ workout.exercises|length }}</td>
+            <td><span class="badge {{ 'success' if workout.is_complete else 'warning' }}">{{ 'Complete' if workout.is_complete else 'In progress' }}</span></td>
+            <td><a href="{{ url_for('logbook.detail', workout_id=workout.id) }}" class="button button-ghost button-small">Open</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty-state"><div class="empty-icon">▣</div><h3>No workouts match</h3><p>Complete a workout or adjust the filters.</p></div>
+{% endif %}
+{% endblock %}

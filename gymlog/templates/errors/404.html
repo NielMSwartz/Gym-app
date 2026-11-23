@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#7d1f2b">
+  <link rel="icon" href="{{ url_for('static', filename='icons/favicon-32.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <title>Not found · Iron Oath</title>
+</head>
+<body>
+  <div class="offline-page">
+    <div class="card">
+      <div class="empty-icon">⚔</div>
+      <h1>This path leads nowhere</h1>
+      <p class="muted">The page or record you sought is not in the logbook.</p>
+      <a href="{{ url_for('dashboard.index') }}" class="button button-primary">Return to headquarters</a>
+    </div>
+  </div>
+</body>
+</html>

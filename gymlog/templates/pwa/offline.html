@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#7d1f2b">
+  <link rel="manifest" href="{{ url_for('pwa.manifest') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <title>Offline · Iron Oath</title>
+</head>
+<body>
+  <div class="offline-page">
+    <div class="card">
+      <div class="empty-icon">⚔</div>
+      <h1>Offline, warrior</h1>
+      <p class="muted">The training hall shell is available, but live training data lives in Neon PostgreSQL. Reconnect to load your programs and sync queued workout edits.</p>
+      <button class="button button-primary" type="button" onclick="location.reload()">Try again</button>
+      <p style="margin-top:16px"><a href="/">Return to app shell</a></p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}My Programs{% endblock %}
+{% block kicker %}Training Blocks{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>My Programs</h1>
+    <p>Forge, duplicate and archive training blocks. Editing a program never rewrites logged workouts.</p>
+  </div>
+  <div class="header-actions"><a href="{{ url_for('programs.new_program') }}" class="button button-primary">＋ New program</a></div>
+</div>
+
+{% if programs %}
+  <div class="grid grid-2">
+    {% for item in programs %}
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h3>{{ item.name }}</h3>
+            <div class="muted">{{ item.start_date.strftime('%d %b %Y') }} · {{ item.duration_weeks }} weeks</div>
+          </div>
+          <div>
+            {% if active and item.id == active.id %}<span class="badge success">Active</span>{% elif item.status == 'archived' %}<span class="badge">Archived</span>{% endif %}
+          </div>
+        </div>
+        <p class="muted">{{ item.description or 'No description added.' }}</p>
+        <div class="button-row">
+          <a href="{{ url_for('programs.planner', program_id=item.id) }}" class="button button-ghost button-small">Open planner</a>
+          <a href="{{ url_for('programs.edit_program', program_id=item.id) }}" class="button button-ghost button-small">Edit</a>
+          <form method="post" action="{{ url_for('programs.duplicate', program_id=item.id) }}"><button class="button button-ghost button-small">Duplicate</button></form>
+          {% if item.id != (active.id if active else none) and item.status != 'archived' %}
+            <form method="post" action="{{ url_for('programs.activate', program_id=item.id) }}"><button class="button button-ghost button-small">Set active</button></form>
+          {% endif %}
+          {% if item.status == 'active' %}
+            <form method="post" action="{{ url_for('programs.archive', program_id=item.id) }}"><button class="button button-ghost button-small">Archive</button></form>
+          {% endif %}
+          <form method="post" action="{{ url_for('programs.delete_program', program_id=item.id) }}" data-confirm="Delete this program? Completed workouts will remain in your logbook.">
+            <button class="button button-danger button-small">Delete</button>
+          </form>
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state">
+    <div class="empty-icon">▤</div>
+    <h3>No programs forged yet</h3>
+    <p>Create an eight-week block with your own days, exercises, sets and targets.</p>
+    <a href="{{ url_for('programs.new_program') }}" class="button button-primary">Create program</a>
+  </div>
+{% endif %}
+{% endblock %}

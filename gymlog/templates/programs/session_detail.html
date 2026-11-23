@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ day.display_label }}{% endblock %}
+{% block kicker %}Session Details{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ day.display_label }}</h1>
+    <p>Week {{ day.week.week_number }} of {{ day.week.program.name }}{% if day.week.title %} · {{ day.week.title }}{% endif %}</p>
+  </div>
+  <div class="header-actions">
+    <a href="{{ url_for('programs.planner', program_id=day.week.program_id) }}" class="button button-ghost">Back to planner</a>
+    {% if not day.is_rest %}
+      <form method="post" action="{{ url_for('workouts.start_workout') }}">
+        <input type="hidden" name="day_id" value="{{ day.id }}">
+        <button class="button button-primary" type="submit">Start this workout</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if day.notes %}<div class="card" style="margin-bottom:16px"><h3>Session notes</h3><p>{{ day.notes }}</p></div>{% endif %}
+
+{% if day.exercises %}
+  {% for assignment in day.exercises %}
+    <section class="card workout-exercise">
+      <div class="workout-exercise-head">
+        <div>
+          <h3>{{ loop.index }}. {{ assignment.exercise.name }}</h3>
+          <div class="muted">{{ assignment.exercise.muscle_group }} · {{ assignment.exercise.category }} · {{ assignment.exercise.equipment }}</div>
+        </div>
+        <span class="badge">{{ assignment.planned_sets|length }} planned sets</span>
+      </div>
+      {% if assignment.notes %}<p>{{ assignment.notes }}</p>{% endif %}
+      {% if assignment.progression_notes %}<p class="previous-note">Progression: {{ assignment.progression_notes }}</p>{% endif %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Set</th><th class="number">Target reps</th><th class="number">Target weight</th><th class="number">RPE</th><th>Notes</th></tr></thead>
+          <tbody>
+            {% for planned in assignment.planned_sets %}
+              <tr>
+                <td>{{ planned.set_number }}</td>
+                <td class="number">{{ planned.target_reps }}</td>
+                <td class="number">{% if planned.target_weight_kg %}{{ planned.target_weight_kg|round(1) }} kg{% else %}—{% endif %}</td>
+                <td class="number">{{ planned.target_rpe or '—' }}</td>
+                <td class="muted">{{ planned.notes or '—' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endfor %}
+{% else %}
+  <div class="empty-state"><h3>No exercises assigned</h3><p>Edit this week to add exercises and planned sets.</p></div>
+{% endif %}
+{% endblock %}

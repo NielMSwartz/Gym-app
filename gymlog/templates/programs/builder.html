@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit program' if program else 'New program' }}{% endblock %}
+{% block kicker %}Program Builder{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if editing_week %}Customise Week {{ week_number }}{% elif program %}Edit {{ program.name }}{% else %}Forge a New Program{% endif %}</h1>
+    <p>{% if editing_week %}Adjust this single week. Other weeks stay as they are.{% else %}Build your training block week by week. Completed workout history is never rewritten.{% endif %}</p>
+  </div>
+  <div class="header-actions"><a href="{{ url_for('programs.list_programs') }}" class="button button-ghost">Back to programs</a></div>
+</div>
+
+<form id="program-form" method="post">
+  <input type="hidden" id="program-payload" name="payload" value="{{ payload|e }}">
+
+  {% if not editing_week %}
+  <section class="card" style="margin-bottom:16px">
+    <div class="form-grid">
+      <div class="form-row">
+        <div class="field">
+          <label for="name">Program name <span class="required">*</span></label>
+          <input id="name" name="display_name" value="{{ payload_obj.name or '' }}" required placeholder="e.g. Eight Week Iron Oath">
+        </div>
+        <div class="field">
+          <label for="start_date">Start date <span class="required">*</span></label>
+          <input id="start_date" name="display_start" type="date" value="{{ payload_obj.start_date or '' }}" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" name="display_description" placeholder="What is this block meant to achieve?">{{ payload_obj.description or '' }}</textarea>
+      </div>
+      <div class="field" style="max-width:260px">
+        <label for="duration">Duration (weeks)</label>
+        <select id="duration" name="display_duration">
+          {% for option in [4,6,8,10,12] %}
+            <option value="{{ option }}" {% if payload_obj.duration_weeks == option %}selected{% endif %}>{{ option }} weeks</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="builder-toolbar">
+    {% if not editing_week %}
+      <button type="button" class="button button-ghost button-small" id="copy-template">Copy Week 1 to all weeks</button>
+      <button type="button" class="button button-ghost button-small" id="add-week">＋ Add week</button>
+    {% endif %}
+    <button type="submit" class="button button-primary">Save program</button>
+  </div>
+
+  <div id="builder-app"
+       data-exercises='{{ exercises|tojson|e }}'
+       data-editing-week="{{ '1' if editing_week else '0' }}"></div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/builder.js') }}"></script>
+{% endblock %}

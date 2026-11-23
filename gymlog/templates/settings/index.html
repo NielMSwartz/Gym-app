@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block kicker %}Hall Configuration{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Settings</h1><p>Personal preferences used across calculations and the workout timer.</p></div></div>
+
+<div class="grid grid-2">
+  <form method="post" class="card">
+    <h3>Training preferences</h3>
+    <div class="form-grid">
+      <div class="field"><label for="display_name">Display name</label><input id="display_name" name="display_name" value="{{ user.display_name }}"></div>
+      <div class="field"><label for="bodyweight_kg">Bodyweight (kg)</label><input id="bodyweight_kg" name="bodyweight_kg" type="number" step="0.1" min="1" max="400" value="{{ app_settings.bodyweight_kg }}"><div class="field-hint">Used for bodyweight exercise volume and load comparisons.</div></div>
+      <div class="field"><label for="rest_timer_seconds">Default rest timer (seconds)</label><input id="rest_timer_seconds" name="rest_timer_seconds" type="number" min="15" max="600" step="5" value="{{ app_settings.rest_timer_seconds }}"></div>
+      <label class="checkbox-field"><input type="checkbox" name="include_partial_in_stats" value="1" {% if user.settings|selectattr('key','equalto','include_partial_in_stats')|map(attribute='value')|first == 'true' %}checked{% endif %}> Include partial sessions in history views by default</label>
+      <div class="button-row"><button class="button button-primary" type="submit">Save settings</button></div>
+    </div>
+  </form>
+
+  <section class="card">
+    <h3>Data & PWA</h3>
+    <p class="muted">Your permanent training data is stored in Neon PostgreSQL. The installable app shell and static assets are cached by the service worker.</p>
+    <ul>
+      <li>Offline workout edits are stored in IndexedDB and marked <strong>pending sync</strong>.</li>
+      <li>Sync uses a unique workout ID so retries never create duplicate sessions.</li>
+      <li>If the server copy changed after your offline copy was saved, a <strong>conflict</strong> is shown instead of overwriting newer data.</li>
+    </ul>
+    <button class="button button-ghost" type="button" id="install-settings">Install app</button>
+    <script>
+      document.getElementById('install-settings').addEventListener('click', function () {
+        document.getElementById('install-button').click();
+      });
+    </script>
+  </section>
+</div>
+{% endblock %}

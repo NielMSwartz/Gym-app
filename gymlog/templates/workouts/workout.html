@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block head %}<meta name="rest-seconds" content="{{ app_settings.rest_timer_seconds }}">{% endblock %}
+{% block title %}{{ workout.title }}{% endblock %}
+{% block kicker %}{{ 'Workout in progress' if workout.is_complete == false else 'Completed workout' }}{% endblock %}
+{% block content %}
+<div id="workout-root"
+     data-workout-id="{{ workout.id }}"
+     data-workout-url="{{ url_for('workouts.workout_detail', workout_id=workout.id) }}"
+     data-payload-url="{{ url_for('workouts.workout_payload', workout_id=workout.id) }}"
+     data-updated-at="{{ workout.updated_at.isoformat() }}Z"
+     data-client-uuid="{{ workout.client_uuid }}"
+     data-program-name="{{ workout.program_name_snapshot }}"
+     data-week-number="{{ workout.week_number or '' }}"
+     data-day-name="{{ workout.training_day_name_snapshot }}"
+     data-started-at="{{ workout.started_at.isoformat() }}Z"
+     data-status="{{ workout.status }}">
+
+<div class="page-header">
+  <div>
+    <h1>{{ workout.title }}</h1>
+    <p>{{ workout.program_name_snapshot }} · started {{ workout.started_at.strftime('%d %b %Y %H:%M') }}
+      {% if workout.is_complete %}· completed {{ workout.completed_at.strftime('%d %b %Y %H:%M') }}{% endif %}
+    </p>
+  </div>
+  <div class="header-actions">
+    <a href="{{ url_for('workouts.active_workouts') }}" class="button button-ghost">All sessions</a>
+    {% if not workout.is_complete %}
+      <button type="button" class="button button-ghost" id="copy-previous">Copy previous weights & reps</button>
+      <button type="button" class="button button-gold" id="save-offline">Save offline copy</button>
+    {% endif %}
+  </div>
+</div>
+
+<div id="workout-status" class="flash flash-info" hidden role="status" aria-live="polite"></div>
+
+<div class="workout-layout">
+  <div>
+    {% if workout.exercises %}
+      <div class="card" style="margin-bottom:14px">
+        <div class="button-row">
+          {% for we in workout.exercises %}
+            <a class="exercise-chip" href="#exercise-{{ we.id }}">{{ we.exercise_name_snapshot }}</a>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% for we in workout.exercises %}
+        <section class="card workout-exercise" id="exercise-{{ we.id }}" data-we-id="{{ we.id }}">
+          <div class="workout-exercise-head">
+            <div>
+              <h3>{{ loop.index }}. {{ we.exercise_name_snapshot }}</h3>
+              <div class="muted">
+                {{ we.muscle_group_snapshot }}
+                {% if we.is_bodyweight_snapshot %}· bodyweight + additional load (your bodyweight: {{ bodyweight }} kg){% endif %}
+              </div>
+              {% if comparisons.get(we.id) %}
+                <div class="previous-note">
+                  Previous: {{ comparisons[we.id].set_count }} completed sets · best
+                  {% if comparisons[we.id].best_set %}{{ comparisons[we.id].best_set.actual_reps or 0 }} reps @ {{ comparisons[we.id].best_set.actual_weight_kg or 0 }} kg{% endif %}
+                  · <a href="{{ url_for('logbook.exercise_history', exercise_key=we.exercise_key) }}">full history</a>
+                </div>
+              {% endif %}
+            </div>
+            <div class="button-row">
+              {% if not workout.is_complete %}
+                <button type="button" class="button button-ghost button-small" data-action="add-set">＋ Set</button>
+                <button type="button" class="button button-danger button-small" data-action="remove-exercise">Remove</button>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if we.notes %}<p class="muted">{{ we.notes }}</p>{% endif %}
+
+          <div class="table-wrap">
+            <table class="set-table">
+              <thead><tr><th>Set</th><th>Reps</th><th>{{ 'Extra kg' if we.is_bodyweight_snapshot else 'Weight kg' }}</th><th>RPE</th><th>RIR</th><th>Done</th><th>Notes</th><th></th></tr></thead>
+              <tbody>
+                {% for actual in we.sets %}
+                  <tr data-set-id="{{ actual.id }}" class="{% if actual.is_completed %}completed-set{% endif %}">
+                    <td><span class="set-number-badge">{{ actual.set_number }}</span></td>
+                    <td><input type="number" min="0" max="500" value="{{ actual.actual_reps if actual.actual_reps is not none else '' }}" data-field="actual_reps" aria-label="Set {{ actual.set_number }} reps" {% if workout.is_complete %}disabled{% endif %}></td>
+                    <td><input type="number" step="0.5" min="0" value="{{ actual.actual_weight_kg if actual.actual_weight_kg is not none else '' }}" data-field="actual_weight_kg" aria-label="Set {{ actual.set_number }} weight" {% if workout.is_complete %}disabled{% endif %}></td>
+                    <td><input type="number" step="0.5" min="1" max="10" value="{{ actual.rpe if actual.rpe is not none else '' }}" data-field="rpe" aria-label="Set {{ actual.set_number }} RPE" {% if workout.is_complete %}disabled{% endif %}></td>
+                    <td><input type="number" step="0.5" min="0" value="{{ actual.rir if actual.rir is not none else '' }}" data-field="rir" aria-label="Set {{ actual.set_number }} RIR" {% if workout.is_complete %}disabled{% endif %}></td>
+                    <td><input type="checkbox" class="set-complete" data-field="is_completed" {% if actual.is_completed %}checked{% endif %} {% if workout.is_complete %}disabled{% endif %} aria-label="Mark set {{ actual.set_number }} complete"></td>
+                    <td><input type="text" value="{{ actual.notes or '' }}" data-field="notes" placeholder="Notes" {% if workout.is_complete %}disabled{% endif %}></td>
+                    <td>{% if not workout.is_complete %}<button type="button" class="button button-danger button-small" data-action="delete-set">×</button>{% endif %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      {% endfor %}
+
+      {% if not workout.is_complete %}
+      <section class="card">
+        <h3>Add an exercise to this session</h3>
+        <form method="post" action="{{ url_for('workouts.add_exercise', workout_id=workout.id) }}" class="form-row">
+          <div class="field"><label for="exercise_id">Exercise</label><select id="exercise_id" name="exercise_id" required>
+            <option value="">— choose exercise —</option>
+            {% for exercise in library %}<option value="{{ exercise.id }}">{{ exercise.name }}</option>{% endfor %}
+          </select></div>
+          <div class="field" style="justify-content:end"><button class="button button-ghost" type="submit">Add exercise</button></div>
+        </form>
+      </section>
+      {% endif %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">⚔</div>
+        <h3>No exercises in this workout</h3>
+        <p>Add an exercise from your library to begin logging sets.</p>
+      </div>
+      {% if not workout.is_complete %}
+      <section class="card">
+        <form method="post" action="{{ url_for('workouts.add_exercise', workout_id=workout.id) }}" class="form-grid">
+          <div class="field"><label for="exercise_id">Exercise</label><select id="exercise_id" name="exercise_id" required>
+            <option value="">— choose exercise —</option>
+            {% for exercise in library %}<option value="{{ exercise.id }}">{{ exercise.name }}</option>{% endfor %}
+          </select></div>
+          <button class="button button-primary" type="submit">Add first exercise</button>
+        </form>
+      </section>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <aside>
+    <section class="card" style="position:sticky;top:78px">
+      <h3>Session control</h3>
+      <div class="stat-label">Rest timer</div>
+      <div id="rest-timer" class="rest-timer" style="margin-bottom:8px">01:30</div>
+      <div class="button-row" style="margin-bottom:14px">
+        <button type="button" class="button button-ghost button-small" id="start-rest">Start rest</button>
+        <button type="button" class="button button-ghost button-small" id="reset-rest">Reset</button>
+      </div>
+      <div class="field"><label for="workout-notes">Workout notes</label><textarea id="workout-notes" placeholder="How did it feel?">{{ workout.notes }}</textarea></div>
+      <div class="button-row" style="margin-top:10px">
+        <button type="button" class="button button-ghost button-small" id="save-notes">Save notes</button>
+      </div>
+      {% if not workout.is_complete %}
+        <button id="complete-workout" class="button button-primary button-block" style="margin-top:14px">Complete workout</button>
+        <p class="muted" style="font-size:0.76rem;margin-top:8px">Only completed sets count towards statistics and personal records. Saving while offline queues this workout for sync.</p>
+        <form method="post" action="{{ url_for('workouts.delete_workout', workout_id=workout.id) }}" data-confirm="Discard this unfinished workout? This cannot be undone." style="margin-top:10px">
+          <button class="button button-danger button-small" type="submit">Discard session</button>
+        </form>
+      {% else %}
+        <span class="badge success">Completed · logged permanently</span>
+        <a href="{{ url_for('logbook.detail', workout_id=workout.id) }}" class="button button-ghost button-block" style="margin-top:12px">View logbook entry</a>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/workout.js') }}"></script>
+{% endblock %}

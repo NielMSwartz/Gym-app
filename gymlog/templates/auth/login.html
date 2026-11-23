@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#7d1f2b">
+  <link rel="manifest" href="{{ url_for('pwa.manifest') }}">
+  <link rel="icon" href="{{ url_for('static', filename='icons/favicon-32.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <title>Enter the Training Hall</title>
+</head>
+<body>
+  <div class="offline-page">
+    <div class="card">
+      <div class="brand-mark" style="margin:0 auto 14px;width:56px;height:56px">⚔</div>
+      <h1>Enter the Training Hall</h1>
+      <p class="muted">This logbook is protected by a single access password.</p>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}<div class="flash flash-{{ category }}">{{ message }}</div>{% endfor %}
+      {% endwith %}
+      <form method="post" class="form-grid" style="text-align:left">
+        <input type="hidden" name="next" value="{{ next_url }}">
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+        </div>
+        <button class="button button-primary button-block" type="submit">Enter</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

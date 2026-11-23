@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Exercise Library{% endblock %}
+{% block kicker %}Movement Catalogue{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Exercise Library</h1>
+    <p>Reusable movement definitions. Edit freely — completed workouts keep their own snapshots.</p>
+  </div>
+  <div class="header-actions"><a href="{{ url_for('exercises.new_exercise') }}" class="button button-primary">＋ Add exercise</a></div>
+</div>
+
+<section class="card" style="margin-bottom:16px">
+  <form class="form-row-3" method="get">
+    <div class="field">
+      <label for="q">Search</label>
+      <input id="q" name="q" value="{{ search }}" placeholder="Name, equipment or notes">
+    </div>
+    <div class="field">
+      <label for="muscle">Muscle group</label>
+      <select id="muscle" name="muscle">
+        <option value="">All groups</option>
+        {% for group in muscle_groups %}<option value="{{ group }}" {% if muscle == group %}selected{% endif %}>{{ group }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field" style="justify-content:end">
+      <label class="checkbox-field"><input type="checkbox" name="archived" value="1" {% if show_archived %}checked{% endif %}> Show archived</label>
+      <button class="button button-ghost" type="submit">Filter</button>
+    </div>
+  </form>
+</section>
+
+{% if exercises %}
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Exercise</th><th>Muscle group</th><th>Category</th><th>Equipment</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for exercise in exercises %}
+          <tr>
+            <td><strong>{{ exercise.name }}</strong>{% if exercise.is_archived %} <span class="badge">Archived</span>{% endif %}<div class="muted" style="font-size:0.78rem">{{ exercise.description[:70] }}</div></td>
+            <td>{{ exercise.muscle_group }}</td>
+            <td>{{ exercise.category }}</td>
+            <td>{{ exercise.equipment }}</td>
+            <td>
+              <div class="button-row">
+                <a href="{{ url_for('exercises.edit_exercise', exercise_id=exercise.id) }}" class="button button-ghost button-small">Edit</a>
+                <form method="post" action="{{ url_for('exercises.archive_exercise', exercise_id=exercise.id) }}"><button class="button button-ghost button-small">{{ 'Restore' if exercise.is_archived else 'Archive' }}</button></form>
+                <form method="post" action="{{ url_for('exercises.delete_exercise', exercise_id=exercise.id) }}" data-confirm="Delete this exercise from the library? Historical workouts will be preserved but unlinked.">
+                  <button class="button button-danger button-small">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty-state"><div class="empty-icon">⚒</div><h3>No exercises found</h3><p>Adjust your filters or add a custom exercise.</p></div>
+{% endif %}
+{% endblock %}

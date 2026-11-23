@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Active Workout{% endblock %}
+{% block kicker %}Training Session{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Active Workout</h1><p>Start a programmed session or a freestyle log, then resume it any time.</p></div>
+</div>
+
+{% if in_progress %}
+<section class="card" style="margin-bottom:18px;border-color:rgba(201,162,77,0.5)">
+  <div class="card-header"><h2>Session in progress</h2><span class="badge warning">Saved in database</span></div>
+  <div class="session-list">
+    {% for session in in_progress %}
+      <a class="session-item" href="{{ url_for('workouts.workout_detail', workout_id=session.id) }}">
+        <div><strong>{{ session.title }}</strong><div class="muted">Started {{ session.started_at.strftime('%d %b %Y %H:%M') }} · {{ session.exercises|length }} exercises</div></div>
+        <span class="button button-gold button-small">Resume</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<div class="grid grid-2">
+  <section class="card">
+    <div class="card-header"><h3>{% if program %}Week {{ week_no }} sessions{% else %}Programmed sessions{% endif %}</h3></div>
+    {% if options %}
+      <div class="session-list">
+        {% for day in options %}
+          <div class="session-item">
+            <div><strong>{{ day.display_label }}</strong><div class="muted">{{ day.exercises|length }} exercises planned</div></div>
+            <form method="post" action="{{ url_for('workouts.start_workout') }}">
+              <input type="hidden" name="day_id" value="{{ day.id }}">
+              <button class="button button-primary button-small" type="submit">Start</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><h3>No programmed days</h3><p>Assign training days in your program, or start a freestyle session.</p></div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-header"><h3>Freestyle session</h3></div>
+    <p class="muted">Not following a plan today? Open a blank log and add exercises as you go.</p>
+    <form method="post" action="{{ url_for('workouts.start_workout') }}" class="form-grid">
+      <div class="field"><label for="label">Session name</label><input id="label" name="label" placeholder="e.g. Push day"></div>
+      <button class="button button-gold" type="submit">Start freestyle workout</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

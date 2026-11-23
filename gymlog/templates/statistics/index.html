@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Statistics{% endblock %}
+{% block kicker %}Progression Analysis{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Statistics & Progression</h1><p>Everything below is calculated from completed sets in your permanent workout log.</p></div>
+</div>
+
+<section class="card" style="margin-bottom:18px">
+  <form class="form-row-3" method="get">
+    <div class="field"><label for="exercise">Exercise</label><select id="exercise" name="exercise">
+      <option value="">All exercises</option>
+      {% for item in exercises %}<option value="{{ item.key }}" {% if filters.exercise_key == item.key %}selected{% endif %}>{{ item.name }}</option>{% endfor %}
+    </select></div>
+    <div class="field"><label for="program_id">Program / block</label><select id="program_id" name="program_id">
+      <option value="">All programs</option>
+      {% for item in programs %}<option value="{{ item.id }}" {% if filters.program_id == item.id %}selected{% endif %}>{{ item.name }}</option>{% endfor %}
+    </select></div>
+    <div class="field"><label for="from">From</label><input id="from" type="date" name="from" value="{{ filters.date_from }}"></div>
+    <div class="field"><label for="to">To</label><input id="to" type="date" name="to" value="{{ filters.date_to }}"></div>
+    <div class="field"><label class="checkbox-field" style="margin-top:32px"><input type="checkbox" name="include_partial" value="1" {% if filters.include_partial %}checked{% endif %}> Include partial sessions</label></div>
+    <div class="field" style="justify-content:end"><button class="button button-ghost" type="submit">Apply filters</button></div>
+  </form>
+</section>
+
+<div class="summary-strip">
+  <div class="card stat-card"><div class="stat-label">Completed sessions</div><div class="stat-value">{{ payload.summary.completed_sessions }}</div></div>
+  <div class="card stat-card"><div class="stat-label">Logged sets</div><div class="stat-value">{{ payload.summary.logged_sets }}</div></div>
+  <div class="card stat-card"><div class="stat-label">Total volume</div><div class="stat-value">{{ payload.summary.total_volume }}</div><div class="stat-note">kg · sets × reps × load</div></div>
+  <div class="card stat-card"><div class="stat-label">Best 8RM load</div><div class="stat-value">{{ payload.summary.best_8rm or '—' }}</div></div>
+  <div class="card stat-card"><div class="stat-label">Best 5RM load</div><div class="stat-value">{{ payload.summary.best_5rm or '—' }}</div></div>
+  <div class="card stat-card"><div class="stat-label">Best 3RM load</div><div class="stat-value">{{ payload.summary.best_3rm or '—' }}</div></div>
+</div>
+
+{% if not payload.has_data %}
+  <div class="empty-state"><div class="empty-icon">◈</div><h3>Not enough data yet</h3><p>Complete workouts with actual reps and weights to unlock charts. Your plans alone are not counted here.</p></div>
+{% else %}
+<div class="chart-grid">
+  <section class="card">
+    <div class="card-header"><h3>Strength progression</h3><span class="badge">{{ filters.exercise_key or 'All exercises' }}</span></div>
+    {% if filters.exercise_key and payload.strength %}
+      <div class="chart-box"><canvas id="strength-chart"></canvas></div>
+    {% else %}
+      <div class="empty-state" style="padding:18px"><p>Choose a specific exercise to see weight and estimated 1RM over time.</p></div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-header"><h3>Training volume by week</h3></div>
+    <div class="chart-box"><canvas id="weekly-volume-chart"></canvas></div>
+  </section>
+
+  <section class="card">
+    <div class="card-header"><h3>Volume by muscle group</h3></div>
+    <div class="chart-box"><canvas id="muscle-volume-chart"></canvas></div>
+  </section>
+
+  <section class="card">
+    <div class="card-header"><h3>Sessions completed vs planned</h3></div>
+    <div class="chart-box"><canvas id="consistency-chart"></canvas></div>
+    <p class="muted" style="font-size:0.8rem">Program completion: {{ payload.consistency.program_completion }}%</p>
+  </section>
+
+  <section class="card">
+    <div class="card-header"><h3>Volume by exercise</h3></div>
+    <div class="chart-box"><canvas id="exercise-volume-chart"></canvas></div>
+  </section>
+
+  <section class="card">
+    <div class="card-header"><h3>Volume per workout</h3></div>
+    <div class="chart-box"><canvas id="workout-volume-chart"></canvas></div>
+  </section>
+</div>
+<p class="muted" style="margin-top:14px;font-size:0.78rem">Estimated 1RM uses the Epley formula and is an estimate only — not a tested maximum.</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<script>
+  window.IRON_OATH_STATS = {{ payload|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Personal Records{% endblock %}
+{% block kicker %}Hall of Honours{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Personal Records</h1><p>Awarded automatically from completed workouts only. No estimate is presented as a tested maximum.</p></div>
+</div>
+
+<section class="card" style="margin-bottom:16px">
+  <form method="get" class="form-row">
+    <div class="field"><label for="type">Record type</label><select id="type" name="type" onchange="this.form.submit()">
+      <option value="">All records ({{ total }})</option>
+      {% for key, label in labels.items() %}<option value="{{ key }}" {% if record_type == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select></div>
+    <div class="field" style="justify-content:end"><a href="{{ url_for('records.index') }}" class="button button-ghost">Clear filter</a></div>
+  </form>
+</section>
+
+{% if grouped %}
+  {% for type, records in grouped.items() %}
+    <section class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>{{ labels.get(type, type) }}</h3><span class="badge">{{ records|length }} record{{ '' if records|length == 1 else 's' }}</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Exercise</th><th>Value</th><th>Date</th><th>Context</th><th></th></tr></thead>
+          <tbody>
+            {% for record in records %}
+              <tr>
+                <td><span class="record-medal">★</span> <strong>{{ record.exercise_name_snapshot }}</strong></td>
+                <td class="record-value">{{ record.display_value }}</td>
+                <td>{{ record.achieved_at.strftime('%d %b %Y') }}</td>
+                <td class="muted">{{ record.details }}</td>
+                <td>{% if record.workout %}<a href="{{ url_for('logbook.detail', workout_id=record.workout_session_id) }}" class="button button-ghost button-small">Workout</a>{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endfor %}
+{% else %}
+  <div class="empty-state"><div class="empty-icon">★</div><h3>No records claimed yet</h3><p>Complete sets with weights and reps, then mark the workout complete. Records are recalculated whenever a completed workout changes.</p></div>
+{% endif %}
+{% endblock %}

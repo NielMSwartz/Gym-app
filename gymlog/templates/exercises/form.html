@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit exercise' if exercise else 'New exercise' }}{% endblock %}
+{% block kicker %}Exercise Library{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ 'Edit ' ~ exercise.name if exercise else 'Add an Exercise' }}</h1><p>Custom movements are fully supported and reusable across programs.</p></div>
+  <div class="header-actions"><a href="{{ url_for('exercises.library') }}" class="button button-ghost">Back to library</a></div>
+</div>
+
+<form method="post" class="card">
+  <div class="form-grid">
+    <div class="form-row">
+      <div class="field"><label for="name">Exercise name <span class="required">*</span></label><input id="name" name="name" value="{{ exercise.name if exercise else '' }}" required></div>
+      <div class="field"><label for="muscle_group">Muscle group</label><input id="muscle_group" name="muscle_group" value="{{ exercise.muscle_group if exercise else 'Chest' }}"></div>
+    </div>
+    <div class="form-row-3">
+      <div class="field"><label for="category">Category</label><select id="category" name="category">
+        {% for option in ['Compound', 'Isolation', 'Cardio', 'Mobility'] %}<option {% if exercise and exercise.category == option %}selected{% endif %}>{{ option }}</option>{% endfor %}
+      </select></div>
+      <div class="field"><label for="equipment">Equipment</label><input id="equipment" name="equipment" value="{{ exercise.equipment if exercise else 'Barbell' }}"></div>
+      <div class="field"><label class="checkbox-field" style="margin-top:32px"><input type="checkbox" name="is_bodyweight" value="1" {% if exercise and exercise.is_bodyweight %}checked{% endif %}> Bodyweight exercise</label></div>
+    </div>
+    <div class="field"><label for="description">Description</label><textarea id="description" name="description">{{ exercise.description if exercise else '' }}</textarea></div>
+    <div class="field"><label for="technique_notes">Technique notes</label><textarea id="technique_notes" name="technique_notes">{{ exercise.technique_notes if exercise else '' }}</textarea></div>
+    {% if exercise %}
+      <label class="checkbox-field"><input type="checkbox" name="is_archived" value="1" {% if exercise.is_archived %}checked{% endif %}> Archived</label>
+    {% endif %}
+    <div class="button-row"><button class="button button-primary" type="submit">Save exercise</button></div>
+  </div>
+</form>
+{% endblock %}
