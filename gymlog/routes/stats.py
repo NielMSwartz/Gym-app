@@ -15,7 +15,7 @@ from ..analytics import (
     volume_by_week,
     volume_by_workout,
 )
-from ..models import Exercise, Program, WorkoutExercise, WorkoutSession
+from ..models import Program, WorkoutExercise, WorkoutSession
 from ..utils import get_bool_setting, get_float_setting, parse_date
 from .helpers import active_program, current_user
 
@@ -28,8 +28,10 @@ def _filters(user_id: int) -> dict:
         include_partial = get_bool_setting(user_id, "include_partial_in_stats", False)
     else:
         include_partial = include_partial == "1"
+    exercise_key, exercise_label = _resolve_exercise(user_id, request.args.get("exercise", ""))
     return {
-        "exercise_key": request.args.get("exercise", "").strip(),
+        "exercise_key": exercise_key,
+        "exercise_label": exercise_label,
         "program_id": request.args.get("program_id", type=int),
         "date_from": request.args.get("from", ""),
         "date_to": request.args.get("to", ""),
@@ -48,6 +50,27 @@ def _exercise_options(user_id: int) -> list[dict]:
     for we in rows:
         seen.setdefault(we.exercise_key, we.exercise_name_snapshot)
     return [{"key": key, "name": name} for key, name in sorted(seen.items(), key=lambda item: item[1])]
+
+
+def _resolve_exercise(user_id: int, raw: str) -> tuple[str, str]:
+    """Turn a manually typed exercise name into a stats exercise key.
+
+    Older sessions may be linked to library exercises and use numeric keys,
+    while manually entered exercises use ``name:<name>`` keys. Matching by the
+    typed name supports both without requiring a dropdown.
+    """
+    value = str(raw or "").strip()
+    if not value:
+        return "", ""
+
+    folded = value.casefold()
+    for option in _exercise_options(user_id):
+        if folded == option["name"].casefold() or value == option["key"]:
+            return option["key"], option["name"]
+
+    if value.startswith("name:"):
+        return value, value[5:]
+    return f"name:{value}", value
 
 
 def build_stats_payload(user_id: int, filters: dict) -> dict:
@@ -111,7 +134,6 @@ def index():
         "statistics/index.html",
         payload=payload,
         programs=programs,
-        exercises=_exercise_options(user.id),
         filters=filters,
     )
 

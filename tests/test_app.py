@@ -202,7 +202,16 @@ def test_statistics_and_prs_use_completed_sets_only(client, app):
     assert payload["summary"]["logged_sets"] == 1
     assert payload["summary"]["total_volume"] == 500
     assert payload["summary"]["best_5rm"] == 100
-    assert client.get("/statistics").status_code == 200
+    stats_html = client.get("/statistics").get_data(as_text=True)
+    assert '<select id="exercise"' not in stats_html
+    assert 'name="exercise"' in stats_html
+
+    scoped = client.get(
+        "/api/stats", query_string={"exercise": "barbell bench press"}
+    ).get_json()
+    assert scoped["has_data"] is True
+    assert scoped["summary"]["logged_sets"] == 1
+    assert scoped["filters"]["exercise_label"] == "Barbell Bench Press"
     assert client.get("/records").status_code == 200
 
 
