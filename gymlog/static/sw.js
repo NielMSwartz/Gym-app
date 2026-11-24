@@ -1,5 +1,5 @@
 /* Gym Logbook service worker: app shell cache + network-first navigation. */
-const CACHE_VERSION = 'gym-logbook-v2';
+const CACHE_VERSION = 'gym-logbook-v3';
 const APP_SHELL = [
   '/',
   '/offline',

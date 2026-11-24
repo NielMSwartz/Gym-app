@@ -8,7 +8,7 @@
   <link rel="manifest" href="{{ url_for('pwa.manifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icons/favicon-32.png') }}" sizes="32x32">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=3">
   <title>{% block title %}Gym Logbook{% endblock %} · Strength Tracker</title>
   {% block head %}{% endblock %}
 </head>
@@ -101,8 +101,8 @@
     <a href="{{ url_for('stats.index') }}" class="{% if request.endpoint == 'stats.index' %}active{% endif %}"><span>◈</span><small>Stats</small></a>
   </nav>
 
-  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/offline.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}?v=3" defer></script>
+  <script src="{{ url_for('static', filename='js/offline.js') }}?v=3" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

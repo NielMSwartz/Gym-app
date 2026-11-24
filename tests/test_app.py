@@ -91,6 +91,7 @@ def test_main_pages_render(client):
     assert 'id="install-button"' not in dashboard_html
     builder_html = client.get("/programs/new").get_data(as_text=True)
     assert "data-exercises" not in builder_html
+    assert "builder.js?v=3" in builder_html
     assert "Type your own exercise names" in builder_html
     planner = client.get("/planner", follow_redirects=True)
     assert planner.status_code == 200
@@ -318,5 +319,7 @@ def test_pwa_manifest_and_icons_are_served(client):
     manifest = client.get("/manifest.webmanifest")
     assert manifest.mimetype == "application/manifest+json"
     assert manifest.get_json()["display"] == "standalone"
-    assert client.get("/sw.js").mimetype == "application/javascript"
+    sw = client.get("/sw.js")
+    assert sw.mimetype == "application/javascript"
+    assert b"gym-logbook-v3" in sw.data
     assert client.get("/static/icons/icon-192.png").status_code == 200
