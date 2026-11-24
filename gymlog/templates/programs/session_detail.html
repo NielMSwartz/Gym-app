@@ -25,8 +25,8 @@
     <section class="card workout-exercise">
       <div class="workout-exercise-head">
         <div>
-          <h3>{{ loop.index }}. {{ assignment.exercise.name }}</h3>
-          <div class="muted">{{ assignment.exercise.muscle_group }} · {{ assignment.exercise.category }} · {{ assignment.exercise.equipment }}</div>
+          <h3>{{ loop.index }}. {{ assignment.exercise_name_snapshot }}</h3>
+          <div class="muted">{% if assignment.muscle_group_snapshot %}{{ assignment.muscle_group_snapshot }}{% else %}Custom exercise{% endif %}{% if assignment.is_bodyweight_snapshot %} · Bodyweight{% endif %}</div>
         </div>
         <span class="badge">{{ assignment.planned_sets|length }} planned sets</span>
       </div>

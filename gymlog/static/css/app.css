@@ -265,6 +265,7 @@ input:focus, select:focus, textarea:focus {
 input[type="checkbox"] { width: auto; accent-color: var(--red-bright); }
 textarea { resize: vertical; min-height: 80px; }
 .checkbox-field { display: flex; align-items: center; gap: 8px; font-size: 0.86rem; color: var(--text); }
+input.invalid { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(224,82,96,0.16); }
 .required { color: var(--red-bright); }
 
 /* Tables */

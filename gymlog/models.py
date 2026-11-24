@@ -181,8 +181,11 @@ class ProgramExercise(db.Model):
         db.Integer, db.ForeignKey("training_days.id", ondelete="CASCADE"), nullable=False
     )
     exercise_id = db.Column(
-        db.Integer, db.ForeignKey("exercises.id", ondelete="RESTRICT"), nullable=False
+        db.Integer, db.ForeignKey("exercises.id", ondelete="RESTRICT"), nullable=True
     )
+    exercise_name_snapshot = db.Column(db.String(120), nullable=False, default="")
+    muscle_group_snapshot = db.Column(db.String(80), nullable=False, default="")
+    is_bodyweight_snapshot = db.Column(db.Boolean, nullable=False, default=False)
     order_index = db.Column(db.Integer, nullable=False, default=0)
     notes = db.Column(db.Text, nullable=False, default="")
     progression_notes = db.Column(db.Text, nullable=False, default="")

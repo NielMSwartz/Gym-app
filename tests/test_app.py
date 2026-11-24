@@ -7,9 +7,9 @@ from datetime import timedelta
 
 from gymlog.extensions import db
 from gymlog.models import (
-    Exercise,
     PersonalRecord,
     Program,
+    ProgramExercise,
     ProgramWeek,
     TrainingDay,
     User,
@@ -20,14 +20,8 @@ from gymlog.services import blank_program_payload, program_to_dict
 from gymlog.utils import get_float_setting, get_setting
 
 
-def _exercise_ids(app):
-    with app.app_context():
-        return {row.name: row.id for row in Exercise.query.all()}
-
-
 def _create_program(client, app, name="Test Block", with_day=False):
-    exercise_ids = _exercise_ids(app)
-    payload = blank_program_payload(exercise_ids, 8)
+    payload = blank_program_payload(8)
     payload["name"] = name
     if with_day:
         payload["weeks"][0]["days"] = [
@@ -38,7 +32,9 @@ def _create_program(client, app, name="Test Block", with_day=False):
                 "notes": "",
                 "exercises": [
                     {
-                        "exercise_id": exercise_ids["Barbell Bench Press"],
+                        "exercise_name": "Barbell Bench Press",
+                        "muscle_group": "Chest",
+                        "is_bodyweight": False,
                         "notes": "",
                         "progression_notes": "",
                         "sets": [
@@ -92,6 +88,9 @@ def test_main_pages_render(client):
         assert client.get(path).status_code == 200, path
     dashboard_html = client.get("/").get_data(as_text=True)
     assert 'id="install-button"' not in dashboard_html
+    builder_html = client.get("/programs/new").get_data(as_text=True)
+    assert "data-exercises" not in builder_html
+    assert "Type your own exercise names" in builder_html
     assert client.get("/planner").status_code == 302
 
 
@@ -108,7 +107,35 @@ def test_program_builder_creates_eight_weeks(client, app):
     assert client.get(f"/planner/program/{program_id}").status_code == 200
 
 
-def test_program_and_exercise_edits_preserve_workout_history(client, app):
+def test_exercise_names_are_manual_everywhere(client, app):
+    program_id = _create_program(client, app, "Manual Block", with_day=True)
+    with app.app_context():
+        assignment = ProgramExercise.query.first()
+        assert assignment.exercise_id is None
+        assert assignment.exercise_name_snapshot == "Barbell Bench Press"
+        assert assignment.muscle_group_snapshot == "Chest"
+
+    workout_id = _start_workout(client, _first_training_day(app, program_id))
+    with app.app_context():
+        workout_exercise = WorkoutSession.query.get(workout_id).exercises[0]
+        assert workout_exercise.exercise_id is None
+        assert workout_exercise.exercise_name_snapshot == "Barbell Bench Press"
+        assert workout_exercise.muscle_group_snapshot == "Chest"
+
+    start = client.post("/workouts/start", data={"label": "Freestyle"})
+    assert start.status_code == 302
+    freestyle_id = int(start.headers["Location"].rstrip("/").split("/")[-1])
+    add = client.post(
+        f"/workouts/{freestyle_id}/exercises",
+        data={"name": "  Cable Curl  ", "muscle_group": "Arms"},
+    )
+    assert add.status_code == 302
+    with app.app_context():
+        names = [we.exercise_name_snapshot for we in WorkoutSession.query.get(freestyle_id).exercises]
+        assert names == ["Cable Curl"]
+
+
+def test_program_edits_preserve_workout_history(client, app):
     program_id = _create_program(client, app, "History Block", with_day=True)
     day_id = _first_training_day(app, program_id)
     workout_id = _start_workout(client, day_id)
@@ -116,7 +143,6 @@ def test_program_and_exercise_edits_preserve_workout_history(client, app):
     with app.app_context():
         workout = WorkoutSession.query.get(workout_id)
         exercise = workout.exercises[0]
-        exercise_id = exercise.exercise_id
         set_id = exercise.sets[0].id
         original_name = exercise.exercise_name_snapshot
         original_program = workout.program_name_snapshot
@@ -127,18 +153,9 @@ def test_program_and_exercise_edits_preserve_workout_history(client, app):
     ).status_code == 200
     assert client.post(f"/workouts/{workout_id}/complete", json={}).status_code == 200
 
-    rename = {
-        "name": "Renamed Press",
-        "muscle_group": "Chest",
-        "category": "Compound",
-        "equipment": "Barbell",
-        "description": "",
-        "technique_notes": "",
-    }
-    assert client.post(f"/exercises/{exercise_id}/edit", data=rename).status_code == 302
-
     with app.app_context():
         payload = program_to_dict(Program.query.get(program_id))
+        payload["weeks"][0]["days"][0]["exercises"][0]["exercise_name"] = "Renamed Press"
         payload["weeks"][0]["title"] = "Deload week"
         payload["name"] = "Renamed Block"
     assert client.post(f"/programs/{program_id}/edit", data={"payload": json.dumps(payload)}).status_code == 302

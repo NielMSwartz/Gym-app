@@ -7,7 +7,7 @@ import json
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 from ..extensions import db
-from ..models import Exercise, Program, TrainingDay
+from ..models import Program, TrainingDay
 from ..services import (
     blank_program_payload,
     copy_week,
@@ -20,24 +20,6 @@ from ..utils import get_setting, set_setting
 from .helpers import active_program, current_user, owned
 
 bp = Blueprint("programs", __name__)
-
-
-def _exercise_choices(user_id: int) -> list[dict]:
-    rows = (
-        Exercise.query.filter_by(user_id=user_id, is_archived=False)
-        .order_by(Exercise.name.asc())
-        .all()
-    )
-    return [
-        {
-            "id": row.id,
-            "name": row.name,
-            "muscle_group": row.muscle_group,
-            "equipment": row.equipment,
-            "is_bodyweight": row.is_bodyweight,
-        }
-        for row in rows
-    ]
 
 
 def _parse_payload() -> dict:
@@ -62,7 +44,6 @@ def list_programs():
 @bp.route("/programs/new", methods=["GET", "POST"])
 def new_program():
     user = current_user()
-    choices = _exercise_choices(user.id)
     if request.method == "POST":
         try:
             program = save_program_from_payload(user.id, _parse_payload())
@@ -73,7 +54,6 @@ def new_program():
                 program=None,
                 payload=request.form.get("payload", ""),
                 payload_obj=_safe_payload(request.form.get("payload", "")),
-                exercises=choices,
                 editing_week=False,
             ), 400
         db.session.commit()
@@ -81,14 +61,12 @@ def new_program():
         db.session.commit()
         flash(f"Program “{program.name}” has been saved.", "success")
         return redirect(url_for("programs.planner", program_id=program.id))
-    names = {row["name"]: row["id"] for row in choices}
-    payload = blank_program_payload(names, 8)
+    payload = blank_program_payload(8)
     return render_template(
         "programs/builder.html",
         program=None,
         payload=json.dumps(payload),
         payload_obj=payload,
-        exercises=choices,
         editing_week=False,
     )
 
@@ -97,7 +75,6 @@ def new_program():
 def edit_program(program_id: int):
     user = current_user()
     program = owned(Program, program_id, user.id)
-    choices = _exercise_choices(user.id)
     if request.method == "POST":
         try:
             save_program_from_payload(user.id, _parse_payload(), program)
@@ -108,7 +85,6 @@ def edit_program(program_id: int):
                 program=program,
                 payload=request.form.get("payload", ""),
                 payload_obj=_safe_payload(request.form.get("payload", "")),
-                exercises=choices,
                 editing_week=False,
             ), 400
         db.session.commit()
@@ -120,7 +96,6 @@ def edit_program(program_id: int):
         program=program,
         payload=json.dumps(payload),
         payload_obj=payload,
-        exercises=choices,
         editing_week=False,
     )
 
@@ -132,7 +107,6 @@ def edit_week(program_id: int, week_number: int):
     week = next((w for w in program.weeks if w.week_number == week_number), None)
     if not week:
         abort(404)
-    choices = _exercise_choices(user.id)
     if request.method == "POST":
         try:
             incoming = _parse_payload()
@@ -155,7 +129,6 @@ def edit_week(program_id: int, week_number: int):
         program=program,
         payload=json.dumps(payload),
         payload_obj=payload,
-        exercises=choices,
         editing_week=True,
         week_number=week_number,
     )

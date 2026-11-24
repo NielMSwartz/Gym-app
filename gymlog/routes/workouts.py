@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 
 from ..extensions import db
-from ..models import ActualSet, Exercise, Program, TrainingDay, WorkoutExercise, WorkoutSession
+from ..models import ActualSet, Program, TrainingDay, WorkoutExercise, WorkoutSession
 from ..services import recalculate_prs, serialize_workout, start_freestyle_workout, start_workout_from_day
 from ..utils import current_week_number, get_float_setting, parse_bool, parse_float, parse_int, utcnow
 from .helpers import active_program, current_user, owned
@@ -84,7 +84,6 @@ def workout_detail(workout_id: int):
         workout=session,
         comparisons=comparisons,
         bodyweight=get_float_setting(current_user().id, "bodyweight_kg", 75.0),
-        library=Exercise.query.filter_by(user_id=current_user().id, is_archived=False).order_by(Exercise.name.asc()).all(),
     )
 
 
@@ -127,14 +126,17 @@ def update_set(workout_id: int, set_id: int):
 @bp.post("/workouts/<int:workout_id>/exercises")
 def add_exercise(workout_id: int):
     session = owned(WorkoutSession, workout_id, current_user().id)
-    exercise = owned(Exercise, parse_int(request.values.get("exercise_id")), current_user().id)
+    name = " ".join(str(request.values.get("name", "")).split())[:120]
+    if not name:
+        flash("Enter an exercise name to add it to this workout.", "error")
+        return redirect(url_for("workouts.workout_detail", workout_id=session.id))
     last_index = max((we.order_index for we in session.exercises), default=-1)
     we = WorkoutExercise(
         workout=session,
-        exercise_id=exercise.id,
-        exercise_name_snapshot=exercise.name,
-        muscle_group_snapshot=exercise.muscle_group,
-        is_bodyweight_snapshot=exercise.is_bodyweight,
+        exercise_id=None,
+        exercise_name_snapshot=name,
+        muscle_group_snapshot=" ".join(str(request.values.get("muscle_group", "")).split())[:80],
+        is_bodyweight_snapshot=parse_bool(request.values.get("is_bodyweight", False)),
         order_index=last_index + 1,
     )
     db.session.add(we)
@@ -143,7 +145,7 @@ def add_exercise(workout_id: int):
     session.updated_at = utcnow()
     session.version += 1
     db.session.commit()
-    flash(f"{exercise.name} added to this workout.", "success")
+    flash(f"{name} added to this workout.", "success")
     return redirect(url_for("workouts.workout_detail", workout_id=session.id))
 
 

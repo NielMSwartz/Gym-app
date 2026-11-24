@@ -9,7 +9,6 @@ from typing import Any
 from .extensions import db
 from .models import (
     ActualSet,
-    Exercise,
     PersonalRecord,
     PlannedSet,
     Program,
@@ -41,11 +40,16 @@ from .utils import (
 # ---------------------------------------------------------------------------
 
 
-def blank_program_payload(exercise_ids: dict[str, int] | None = None, duration: int = 8) -> dict[str, Any]:
+def _tidy_text(value: Any, limit: int) -> str:
+    """Normalise user-typed labels without changing their meaning."""
+    return " ".join(str(value or "").split())[:limit]
+
+
+def blank_program_payload(duration: int = 8) -> dict[str, Any]:
     """Return an empty week structure the user fills in themselves.
 
-    No days, exercises or targets are pre-filled. The builder still receives
-    every week so the plan can be saved as-is and edited later.
+    No days, exercises or targets are pre-filled. Exercise names are typed
+    manually in the builder; nothing is selected from the exercise library.
     """
     weeks = []
     for week_number in range(1, duration + 1):
@@ -74,7 +78,9 @@ def program_to_dict(program: Program) -> dict[str, Any]:
                     {
                         "id": assignment.id,
                         "exercise_id": assignment.exercise_id,
-                        "exercise_name": assignment.exercise.name if assignment.exercise else "",
+                        "exercise_name": assignment.exercise_name_snapshot or (assignment.exercise.name if assignment.exercise else ""),
+                        "muscle_group": assignment.muscle_group_snapshot,
+                        "is_bodyweight": assignment.is_bodyweight_snapshot,
                         "notes": assignment.notes,
                         "progression_notes": assignment.progression_notes,
                         "sets": [
@@ -130,9 +136,6 @@ def save_program_from_payload(user_id: int, payload: dict[str, Any], program: Pr
     if not 1 <= duration <= 52:
         raise ValueError("Duration must be between 1 and 52 weeks.")
 
-    owned_exercise_ids = {
-        row[0] for row in db.session.query(Exercise.id).filter(Exercise.user_id == user_id).all()
-    }
     weeks_payload = payload.get("weeks") or []
     if not isinstance(weeks_payload, list):
         raise ValueError("Invalid week configuration.")
@@ -189,12 +192,17 @@ def save_program_from_payload(user_id: int, payload: dict[str, Any], program: Pr
             for order_index, ex_data in enumerate(day_data.get("exercises", [])):
                 if not isinstance(ex_data, dict) or day.is_rest:
                     continue
-                exercise_id = parse_int(ex_data.get("exercise_id"))
-                if exercise_id not in owned_exercise_ids:
-                    raise ValueError("One or more exercises are not in your exercise library.")
+                exercise_name = _tidy_text(
+                    ex_data.get("exercise_name") or ex_data.get("name"), 120
+                )
+                if not exercise_name:
+                    raise ValueError("Enter a name for every exercise, or remove the empty exercise.")
                 assignment = ProgramExercise(
                     training_day=day,
-                    exercise_id=exercise_id,
+                    exercise_id=None,
+                    exercise_name_snapshot=exercise_name,
+                    muscle_group_snapshot=_tidy_text(ex_data.get("muscle_group"), 80),
+                    is_bodyweight_snapshot=parse_bool(ex_data.get("is_bodyweight", False)),
                     order_index=order_index,
                     notes=str(ex_data.get("notes", ""))[:2000],
                     progression_notes=str(ex_data.get("progression_notes", ""))[:2000],
@@ -255,7 +263,10 @@ def copy_week(source: ProgramWeek, target: ProgramWeek) -> None:
         for source_assignment in source_day.exercises:
             assignment = ProgramExercise(
                 training_day=day,
-                exercise_id=source_assignment.exercise_id,
+                exercise_id=None,
+                exercise_name_snapshot=source_assignment.exercise_name_snapshot,
+                muscle_group_snapshot=source_assignment.muscle_group_snapshot,
+                is_bodyweight_snapshot=source_assignment.is_bodyweight_snapshot,
                 order_index=source_assignment.order_index,
                 notes=source_assignment.notes,
                 progression_notes=source_assignment.progression_notes,
@@ -299,10 +310,10 @@ def start_workout_from_day(day: TrainingDay, user_id: int) -> WorkoutSession:
     for order_index, assignment in enumerate(day.exercises):
         workout_exercise = WorkoutExercise(
             workout=session,
-            exercise_id=assignment.exercise_id,
-            exercise_name_snapshot=assignment.exercise.name,
-            muscle_group_snapshot=assignment.exercise.muscle_group,
-            is_bodyweight_snapshot=assignment.exercise.is_bodyweight,
+            exercise_id=None,
+            exercise_name_snapshot=assignment.exercise_name_snapshot,
+            muscle_group_snapshot=assignment.muscle_group_snapshot,
+            is_bodyweight_snapshot=assignment.is_bodyweight_snapshot,
             order_index=order_index,
             notes=assignment.notes,
         )
@@ -431,13 +442,13 @@ def apply_workout_payload(payload: dict[str, Any], user_id: int) -> tuple[dict[s
     for order_index, ex_data in enumerate(exercises_payload):
         if not isinstance(ex_data, dict):
             continue
-        name = str(ex_data.get("name", "")).strip()
+        name = _tidy_text(ex_data.get("name"), 120)
         if not name:
             continue
         workout_exercise = WorkoutExercise(
             workout=session,
             exercise_id=parse_int(ex_data.get("exercise_id")),
-            exercise_name_snapshot=name[:120],
+            exercise_name_snapshot=name,
             muscle_group_snapshot=str(ex_data.get("muscle_group", ""))[:80],
             is_bodyweight_snapshot=parse_bool(ex_data.get("is_bodyweight", False)),
             order_index=parse_int(ex_data.get("order_index"), order_index) or order_index,
@@ -549,7 +560,7 @@ def recalculate_prs(user_id: int) -> None:
                 load = set_load_kg(actual.actual_weight_kg, we.is_bodyweight_snapshot, bodyweight)
                 volume = set_volume_kg(load, actual.actual_reps)
                 session_volume += volume
-                exercise_key = str(we.exercise_id) if we.exercise_id else f"name:{we.exercise_name_snapshot}"
+                exercise_key = we.exercise_key
                 exercise_name = we.exercise_name_snapshot
                 reps = actual.actual_reps
                 if load > 0:

@@ -96,28 +96,30 @@
       {% if not workout.is_complete %}
       <section class="card">
         <h3>Add an exercise to this session</h3>
-        <form method="post" action="{{ url_for('workouts.add_exercise', workout_id=workout.id) }}" class="form-row">
-          <div class="field"><label for="exercise_id">Exercise</label><select id="exercise_id" name="exercise_id" required>
-            <option value="">— choose exercise —</option>
-            {% for exercise in library %}<option value="{{ exercise.id }}">{{ exercise.name }}</option>{% endfor %}
-          </select></div>
-          <div class="field" style="justify-content:end"><button class="button button-ghost" type="submit">Add exercise</button></div>
+        <form method="post" action="{{ url_for('workouts.add_exercise', workout_id=workout.id) }}" class="form-grid">
+          <div class="form-row">
+            <div class="field"><label>Exercise name <span class="required">*</span></label><input name="name" required placeholder="e.g. Barbell Bench Press"></div>
+            <div class="field"><label>Muscle group <span class="muted">(optional)</span></label><input name="muscle_group" placeholder="e.g. Chest"></div>
+          </div>
+          <label class="checkbox-field"><input type="checkbox" name="is_bodyweight" value="1"> Bodyweight exercise</label>
+          <button class="button button-ghost" type="submit">Add exercise</button>
         </form>
       </section>
       {% endif %}
     {% else %}
       <div class="empty-state">
-        <div class="empty-icon">⚔</div>
+        <div class="empty-icon">◇</div>
         <h3>No exercises in this workout</h3>
-        <p>Add an exercise from your library to begin logging sets.</p>
+        <p>Type an exercise name to begin logging sets.</p>
       </div>
       {% if not workout.is_complete %}
       <section class="card">
         <form method="post" action="{{ url_for('workouts.add_exercise', workout_id=workout.id) }}" class="form-grid">
-          <div class="field"><label for="exercise_id">Exercise</label><select id="exercise_id" name="exercise_id" required>
-            <option value="">— choose exercise —</option>
-            {% for exercise in library %}<option value="{{ exercise.id }}">{{ exercise.name }}</option>{% endfor %}
-          </select></div>
+          <div class="form-row">
+            <div class="field"><label>Exercise name <span class="required">*</span></label><input name="name" required placeholder="e.g. Barbell Bench Press"></div>
+            <div class="field"><label>Muscle group <span class="muted">(optional)</span></label><input name="muscle_group" placeholder="e.g. Chest"></div>
+          </div>
+          <label class="checkbox-field"><input type="checkbox" name="is_bodyweight" value="1"> Bodyweight exercise</label>
           <button class="button button-primary" type="submit">Add first exercise</button>
         </form>
       </section>

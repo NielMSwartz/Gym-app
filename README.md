@@ -8,8 +8,9 @@ It keeps **plans** separate from **permanent workout history**: editing a progra
 
 - **Dashboard** — current program week, today's planned session, recent workouts, records and volume trend.
 - **Eight-week planner** — labelled week columns, per-day sessions, reusable templates, custom single-week editing, week-to-week copying, and a stacked mobile week selector.
-- **Program builder** — starts completely empty; add/edit/duplicate/archive programs and configure exercises, planned sets, reps, load, RPE and notes yourself.
-- **Exercise library** — seeded compound/isolation movements plus custom exercises, search, filtering, archive and safe delete.
+- **Program builder** — starts completely empty; type every exercise name yourself with optional muscle group and bodyweight flag, then set reps, load, RPE and notes.
+- **Exercise selection removed** — programs and workouts never use a library dropdown; names are typed manually and stored as snapshots.
+- **Exercise library** — optional reference list of seeded/custom movements with search, filtering, archive and safe delete.
 - **Workout logging** — start programmed or freestyle sessions, resume drafts, copy previous values, record actual reps/load/RPE/RIR/completion/notes, add sets/exercises, rest timer.
 - **Permanent logbook** — date/program filters, partial-session option, workout details and per-exercise history.
 - **Progress Log** — a journal-style chronological view with session entries, volume, streaks and first/latest/estimated-1RM changes per exercise.

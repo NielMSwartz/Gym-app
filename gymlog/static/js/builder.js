@@ -7,7 +7,6 @@
   if (!form || !root) return;
 
   var hidden = document.getElementById('program-payload');
-  var exercises = JSON.parse(root.dataset.exercises || '[]');
   var editingWeek = root.dataset.editingWeek === '1';
   var state = JSON.parse(hidden.value || '{}');
   state.weeks = Array.isArray(state.weeks) ? state.weeks : [];
@@ -24,6 +23,17 @@
     return { set_number: number, target_reps: 8, target_weight_kg: null, target_rpe: null, rest_seconds: 90, notes: '' };
   }
 
+  function defaultExercise() {
+    return {
+      exercise_name: '',
+      muscle_group: '',
+      is_bodyweight: false,
+      notes: '',
+      progression_notes: '',
+      sets: [defaultSet(1), defaultSet(2), defaultSet(3)]
+    };
+  }
+
   function defaultWeek(number) {
     return { week_number: number, title: 'Week ' + number, notes: '', days: [] };
   }
@@ -37,16 +47,7 @@
     state.duration_weeks = count;
   }
 
-  function exerciseOptions(selected) {
-    var html = '<option value="">— choose exercise —</option>';
-    exercises.forEach(function (exercise) {
-      html += '<option value="' + exercise.id + '"' + (String(selected) === String(exercise.id) ? ' selected' : '') + '>' +
-        escapeHtml(exercise.name) + ' · ' + escapeHtml(exercise.muscle_group) + '</option>';
-    });
-    return html;
-  }
-
-  function renderSet(set, weekIndex, dayIndex, exerciseIndex, setIndex) {
+  function renderSet(set, setIndex) {
     return '<div class="set-row" data-set="' + setIndex + '">' +
       '<span class="set-number-badge">' + (setIndex + 1) + '</span>' +
       '<input type="number" min="1" max="100" value="' + escapeHtml(set.target_reps) + '" data-field="target_reps" aria-label="Target reps" placeholder="Reps">' +
@@ -57,16 +58,22 @@
       '</div>';
   }
 
-  function renderExercise(assignment, weekIndex, dayIndex, exerciseIndex) {
+  function renderExercise(assignment, exerciseIndex) {
     var setsHtml = (assignment.sets || []).map(function (set, index) {
-      return renderSet(set, weekIndex, dayIndex, exerciseIndex, index);
+      return renderSet(set, index);
     }).join('');
     return '<div class="assignment-editor" data-exercise="' + exerciseIndex + '">' +
-      '<div class="form-row-3">' +
-        '<div class="field"><label>Exercise</label><select data-field="exercise_id">' + exerciseOptions(assignment.exercise_id) + '</select></div>' +
-        '<div class="field"><label>Notes</label><input type="text" data-field="notes" value="' + escapeHtml(assignment.notes || '') + '" placeholder="Form cue"></div>' +
+      '<div class="form-row">' +
+        '<div class="field"><label>Exercise name <span class="required">*</span></label>' +
+          '<input type="text" data-field="exercise_name" value="' + escapeHtml(assignment.exercise_name || '') + '" required placeholder="e.g. Barbell Bench Press" aria-label="Exercise name"></div>' +
+        '<div class="field"><label>Muscle group <span class="muted">(optional)</span></label>' +
+          '<input type="text" data-field="muscle_group" value="' + escapeHtml(assignment.muscle_group || '') + '" placeholder="e.g. Chest"></div>' +
+      '</div>' +
+      '<div class="form-row" style="margin-top:10px">' +
+        '<div class="field"><label>Exercise notes</label><input type="text" data-field="notes" value="' + escapeHtml(assignment.notes || '') + '" placeholder="Form cue"></div>' +
         '<div class="field"><label>Progression</label><input type="text" data-field="progression_notes" value="' + escapeHtml(assignment.progression_notes || '') + '" placeholder="+2.5kg next week"></div>' +
       '</div>' +
+      '<label class="checkbox-field" style="margin-top:8px"><input type="checkbox" data-field="is_bodyweight"' + (assignment.is_bodyweight ? ' checked' : '') + '> Bodyweight exercise</label>' +
       '<div class="set-rows">' + setsHtml + '</div>' +
       '<div class="button-row" style="margin-top:8px">' +
         '<button type="button" class="button button-ghost button-small" data-action="add-set">＋ Add set</button>' +
@@ -77,7 +84,7 @@
 
   function renderDay(day, weekIndex, dayIndex) {
     var assignments = (day.exercises || []).map(function (assignment, index) {
-      return renderExercise(assignment, weekIndex, dayIndex, index);
+      return renderExercise(assignment, index);
     }).join('');
     return '<div class="day-editor" data-day="' + dayIndex + '">' +
       '<div class="day-editor-head">' +
@@ -152,7 +159,9 @@
         Array.prototype.forEach.call(dayEl.querySelectorAll('[data-exercise]'), function (exEl) {
           var assignment = day.exercises[parseInt(exEl.dataset.exercise, 10)];
           if (!assignment) return;
-          assignment.exercise_id = parseInt(exEl.querySelector('[data-field="exercise_id"]').value, 10) || null;
+          assignment.exercise_name = exEl.querySelector('[data-field="exercise_name"]').value;
+          assignment.muscle_group = exEl.querySelector('[data-field="muscle_group"]').value;
+          assignment.is_bodyweight = exEl.querySelector('[data-field="is_bodyweight"]').checked;
           assignment.notes = exEl.querySelector('[data-field="notes"]').value;
           assignment.progression_notes = exEl.querySelector('[data-field="progression_notes"]').value;
           Array.prototype.forEach.call(exEl.querySelectorAll('[data-set]'), function (setEl) {
@@ -169,6 +178,19 @@
       });
     });
     syncHidden();
+  }
+
+  function validateExerciseNames() {
+    var valid = true;
+    Array.prototype.forEach.call(root.querySelectorAll('[data-exercise]'), function (exEl) {
+      var input = exEl.querySelector('[data-field="exercise_name"]');
+      if (!input) return;
+      var empty = !input.value.trim();
+      input.classList.toggle('invalid', empty);
+      if (empty) valid = false;
+    });
+    if (!valid) alert('Enter a name for each exercise, or remove the empty exercise.');
+    return valid;
   }
 
   root.addEventListener('click', function (event) {
@@ -210,7 +232,7 @@
         render();
         break;
       case 'add-exercise':
-        day.exercises.push({ exercise_id: null, notes: '', progression_notes: '', sets: [defaultSet(1), defaultSet(2), defaultSet(3)] });
+        day.exercises.push(defaultExercise());
         render();
         break;
       case 'remove-exercise':
@@ -232,12 +254,17 @@
 
   form.addEventListener('input', updateStateFromDom);
   form.addEventListener('change', updateStateFromDom);
-  form.addEventListener('submit', function () {
+  form.addEventListener('submit', function (event) {
     updateStateFromDom();
     var name = document.getElementById('name');
     if (name && !name.value.trim()) {
+      event.preventDefault();
       alert('Please give your program a name.');
       name.focus();
+      return false;
+    }
+    if (!validateExerciseNames()) {
+      event.preventDefault();
       return false;
     }
   });

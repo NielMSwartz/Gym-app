@@ -56,16 +56,11 @@ def client(app):
     return app.test_client()
 
 
-def exercise_ids(app):
-    with app.app_context():
-        return {row.name: row.id for row in Exercise.query.all()}
-
-
 def make_program(client, app, name: str = "Test Block"):
     """Create an eight-week program through the real builder endpoint."""
     from gymlog.services import blank_program_payload
 
-    payload = blank_program_payload(exercise_ids(app), 8)
+    payload = blank_program_payload(8)
     payload["name"] = name
     response = client.post("/programs/new", data={"payload": json.dumps(payload)})
     assert response.status_code == 302

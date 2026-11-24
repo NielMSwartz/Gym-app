@@ -72,7 +72,7 @@
           {% for assignment in todays_day.exercises %}
             <div class="session-item">
               <div>
-                <strong>{{ loop.index }}. {{ assignment.exercise.name }}</strong>
+                <strong>{{ loop.index }}. {{ assignment.exercise_name_snapshot }}</strong>
                 <div class="muted">
                   {{ assignment.planned_sets|length }} sets ·
                   {% for planned in assignment.planned_sets %}
@@ -80,7 +80,7 @@
                   {% endfor %}
                 </div>
               </div>
-              <span class="badge">{{ assignment.exercise.muscle_group }}</span>
+              <span class="badge">{{ assignment.muscle_group_snapshot or 'Custom' }}</span>
             </div>
           {% endfor %}
         </div>

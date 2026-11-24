@@ -50,9 +50,8 @@
     <button type="submit" class="button button-primary">Save program</button>
   </div>
 
-  <div id="builder-app"
-       data-exercises='{{ exercises|tojson|e }}'
-       data-editing-week="{{ '1' if editing_week else '0' }}"></div>
+  <p class="muted" style="margin-bottom:10px">Type your own exercise names below. Nothing is selected from the exercise library.</p>
+  <div id="builder-app" data-editing-week="{{ '1' if editing_week else '0' }}"></div>
 </form>
 {% endblock %}
 
