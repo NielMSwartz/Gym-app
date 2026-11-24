@@ -47,6 +47,7 @@ def _create_program(client, app, name="Test Block", with_day=False):
         ]
     response = client.post("/programs/new", data={"payload": json.dumps(payload)})
     assert response.status_code == 302
+    assert response.headers["Location"].startswith("/planner/program/")
     with app.app_context():
         program = Program.query.filter_by(name=name).first()
         assert program is not None
@@ -91,7 +92,8 @@ def test_main_pages_render(client):
     builder_html = client.get("/programs/new").get_data(as_text=True)
     assert "data-exercises" not in builder_html
     assert "Type your own exercise names" in builder_html
-    assert client.get("/planner").status_code == 302
+    planner = client.get("/planner", follow_redirects=True)
+    assert planner.status_code == 200
 
 
 def test_program_builder_creates_eight_weeks(client, app):
@@ -105,6 +107,9 @@ def test_program_builder_creates_eight_weeks(client, app):
         assert program.total_planned_sessions == 0
         assert get_setting(User.query.first().id, "active_program_id") == str(program_id)
     assert client.get(f"/planner/program/{program_id}").status_code == 200
+    planner = client.get("/planner", follow_redirects=True)
+    assert planner.status_code == 200
+    assert planner.request.path == f"/planner/program/{program_id}"
 
 
 def test_exercise_names_are_manual_everywhere(client, app):

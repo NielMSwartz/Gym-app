@@ -60,7 +60,7 @@ def new_program():
         set_setting(user.id, "active_program_id", str(program.id))
         db.session.commit()
         flash(f"Program “{program.name}” has been saved.", "success")
-        return redirect(url_for("programs.planner", program_id=program.id))
+        return redirect(url_for("programs.planner_program", program_id=program.id))
     payload = blank_program_payload(8)
     return render_template(
         "programs/builder.html",
@@ -89,7 +89,7 @@ def edit_program(program_id: int):
             ), 400
         db.session.commit()
         flash("Program updated. Your logged workouts remain untouched.", "success")
-        return redirect(url_for("programs.planner", program_id=program.id))
+        return redirect(url_for("programs.planner_program", program_id=program.id))
     payload = program_to_dict(program)
     return render_template(
         "programs/builder.html",
@@ -122,7 +122,7 @@ def edit_week(program_id: int, week_number: int):
             return redirect(url_for("programs.edit_week", program_id=program_id, week_number=week_number))
         db.session.commit()
         flash(f"Week {week_number} has been customised.", "success")
-        return redirect(url_for("programs.planner", program_id=program_id))
+        return redirect(url_for("programs.planner_program", program_id=program_id))
     payload = {"weeks": [week_payload(week)]}
     return render_template(
         "programs/builder.html",
@@ -181,10 +181,10 @@ def planner():
     if not program:
         first = Program.query.filter_by(user_id=current_user().id).order_by(Program.created_at.desc()).first()
         if first:
-            return redirect(url_for("programs.planner", program_id=first.id))
+            return redirect(url_for("programs.planner_program", program_id=first.id))
         flash("Create a program before opening the training planner.", "info")
         return redirect(url_for("programs.new_program"))
-    return redirect(url_for("programs.planner", program_id=program.id))
+    return redirect(url_for("programs.planner_program", program_id=program.id))
 
 
 @bp.route("/planner/program/<int:program_id>")
@@ -218,7 +218,7 @@ def copy_week_route(week_id: int):
         copy_week(source, target)
         db.session.commit()
         flash(f"Week {source_number} copied into week {target.week_number}.", "success")
-    return redirect(url_for("programs.planner", program_id=target.program_id))
+    return redirect(url_for("programs.planner_program", program_id=target.program_id))
 
 
 def _safe_payload(raw: str):

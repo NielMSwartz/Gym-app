@@ -8,7 +8,7 @@
     <p>Week {{ day.week.week_number }} of {{ day.week.program.name }}{% if day.week.title %} · {{ day.week.title }}{% endif %}</p>
   </div>
   <div class="header-actions">
-    <a href="{{ url_for('programs.planner', program_id=day.week.program_id) }}" class="button button-ghost">Back to planner</a>
+    <a href="{{ url_for('programs.planner_program', program_id=day.week.program_id) }}" class="button button-ghost">Back to planner</a>
     {% if not day.is_rest %}
       <form method="post" action="{{ url_for('workouts.start_workout') }}">
         <input type="hidden" name="day_id" value="{{ day.id }}">

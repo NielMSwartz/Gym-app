@@ -25,7 +25,7 @@
         </div>
         <p class="muted">{{ item.description or 'No description added.' }}</p>
         <div class="button-row">
-          <a href="{{ url_for('programs.planner', program_id=item.id) }}" class="button button-ghost button-small">Open planner</a>
+          <a href="{{ url_for('programs.planner_program', program_id=item.id) }}" class="button button-ghost button-small">Open planner</a>
           <a href="{{ url_for('programs.edit_program', program_id=item.id) }}" class="button button-ghost button-small">Edit</a>
           <form method="post" action="{{ url_for('programs.duplicate', program_id=item.id) }}"><button class="button button-ghost button-small">Duplicate</button></form>
           {% if item.id != (active.id if active else none) and item.status != 'archived' %}

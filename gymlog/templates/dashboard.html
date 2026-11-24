@@ -89,7 +89,7 @@
         <div class="empty-state" style="padding:22px">
           <h3>No exercises assigned</h3>
           <p>Open the planner to add days and exercises to this training day.</p>
-          <a href="{{ url_for('programs.planner', program_id=program.id) }}" class="button button-ghost">Open planner</a>
+          <a href="{{ url_for('programs.planner_program', program_id=program.id) }}" class="button button-ghost">Open planner</a>
         </div>
       {% endif %}
     </section>
